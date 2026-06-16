@@ -1,0 +1,4474 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>CodeQuiz</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#0d0f14;--sf:#161a24;--sf2:#1e2433;--sf3:#252c3d;
+  --bd:#2a3045;--tx:#e2e8f8;--sub:#7a8aaa;--dim:#4a5570;
+  --ac:#4f8ef7;--pu:#a78bfa;--gr:#2ecc8f;--rd:#f25c7a;--ye:#f7c94f;
+  --gg:rgba(46,204,143,.14);--rg:rgba(242,92,122,.14);
+  --mono:'JetBrains Mono',monospace;--sans:'Noto Sans JP',sans-serif;
+  --r:13px;--rs:8px;
+}
+html,body{height:100%;background:var(--bg);color:var(--tx);font-family:var(--sans);-webkit-font-smoothing:antialiased;}
+body{display:flex;justify-content:center;}
+#app{width:100%;max-width:480px;min-height:100vh;display:flex;flex-direction:column;}
+
+/* ===== PAGE STACK ===== */
+/* Only one .page is shown at a time via JS .hide/.show */
+.page{display:none;flex-direction:column;flex:1;min-height:100vh;animation:pgIn .25s ease;}
+.page.active{display:flex;}
+@keyframes pgIn{from{opacity:0;transform:translateX(18px)}to{opacity:1;transform:translateX(0)}}
+
+.pscroll{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding-bottom:40px;}
+.pscroll::-webkit-scrollbar{width:3px}
+.pscroll::-webkit-scrollbar-thumb{background:var(--bd);border-radius:2px}
+
+/* ===== TOPBAR ===== */
+.topbar{display:flex;align-items:center;gap:10px;padding:14px 16px 12px;border-bottom:1px solid var(--bd);background:var(--sf);flex-shrink:0;}
+.tbback{width:34px;height:34px;border-radius:var(--rs);background:var(--sf2);border:1px solid var(--bd);display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:18px;color:var(--sub);flex-shrink:0;}
+.tbback:active{background:var(--sf3);}
+.tbtitle{font-size:15px;font-weight:700;color:var(--tx);}
+.tbsub{font-family:var(--mono);font-size:11px;color:var(--dim);margin-top:2px;}
+
+/* ===== HOME ===== */
+.home-head{padding:20px 16px 12px;}
+.logo{display:flex;align-items:center;gap:10px;margin-bottom:18px;}
+.logo-box{width:38px;height:38px;border-radius:10px;background:linear-gradient(135deg,var(--ac),var(--pu));display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-weight:700;font-size:16px;color:#fff;}
+.logo-name{font-family:var(--mono);font-size:18px;font-weight:700;}
+.logo-name span{color:var(--ac);}
+.sec-label{font-size:10px;font-family:var(--mono);color:var(--dim);letter-spacing:.1em;text-transform:uppercase;padding:0 16px;margin-bottom:8px;}
+
+/* 復習バナー */
+.rev-banner{margin:0 12px 18px;background:linear-gradient(135deg,rgba(167,139,250,.1),rgba(79,142,247,.1));border:1px solid rgba(167,139,250,.28);border-radius:var(--r);padding:14px 16px;display:flex;align-items:center;gap:12px;cursor:pointer;}
+.rev-banner:active{opacity:.75;}
+.rev-icon{width:42px;height:42px;border-radius:10px;background:linear-gradient(135deg,var(--pu),var(--ac));display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0;}
+.rev-body{flex:1;}
+.rev-title{font-size:13px;font-weight:700;color:var(--tx);margin-bottom:2px;}
+.rev-sub{font-size:11px;color:var(--sub);}
+.rev-badge{background:var(--pu);color:#fff;font-family:var(--mono);font-size:12px;font-weight:700;padding:3px 9px;border-radius:20px;min-width:24px;text-align:center;}
+
+/* 言語リスト */
+.lang-list{display:flex;flex-direction:column;gap:9px;padding:0 12px 24px;}
+.lang-card{background:var(--sf);border:1px solid var(--bd);border-radius:var(--r);display:flex;align-items:center;gap:0;cursor:pointer;overflow:hidden;position:relative;}
+.lang-card:active{background:var(--sf2);}
+.lang-stripe{width:4px;align-self:stretch;flex-shrink:0;}
+.lang-emoji{width:54px;display:flex;align-items:center;justify-content:center;font-size:26px;flex-shrink:0;padding:14px 0;}
+.lang-info{flex:1;padding:14px 0;}
+.lang-name{font-family:var(--mono);font-size:14px;font-weight:700;color:var(--tx);margin-bottom:2px;}
+.lang-desc{font-size:11px;color:var(--sub);}
+.lang-meta{padding-right:14px;text-align:right;}
+.lang-qcount{font-family:var(--mono);font-size:12px;color:var(--dim);}
+.lang-catc{font-size:10px;color:var(--dim);margin-top:1px;}
+.lang-arr{color:var(--dim);font-size:18px;padding-right:12px;}
+
+.progress-mini{margin-top:6px;width:100%;height:4px;background:var(--sf3);border-radius:999px;overflow:hidden;}
+.progress-mini-fill{height:100%;background:linear-gradient(90deg,var(--ac),var(--pu));border-radius:999px;width:0%;}
+.progress-text{font-family:var(--mono);font-size:10px;color:var(--dim);margin-top:4px;}
+.cat-progress{margin-top:7px;width:100%;height:4px;background:var(--sf3);border-radius:999px;overflow:hidden;}
+.cat-progress-fill{height:100%;background:linear-gradient(90deg,var(--ac),var(--pu));border-radius:999px;width:0%;}
+.rev-tools{display:flex;gap:8px;padding:0 12px 16px;}
+.rev-mini-btn{flex:1;background:var(--sf);border:1px solid var(--bd);color:var(--sub);font-size:11px;font-weight:700;border-radius:var(--rs);padding:9px;cursor:pointer;}
+.rev-mini-btn:active{background:var(--sf2);}
+
+/* ===== CATEGORY ===== */
+.cat-list{display:flex;flex-direction:column;gap:8px;padding:12px;}
+.cat-card{background:var(--sf);border:1px solid var(--bd);border-radius:var(--rs);padding:14px 16px;display:flex;align-items:center;gap:12px;cursor:pointer;}
+.cat-card:active{background:var(--sf2);border-color:rgba(79,142,247,.4);}
+.cat-icon{width:34px;height:34px;border-radius:8px;background:var(--sf3);border:1px solid var(--bd);display:flex;align-items:center;justify-content:center;font-size:17px;flex-shrink:0;}
+.cat-body{flex:1;}
+.cat-title{font-size:13px;font-weight:600;color:var(--tx);margin-bottom:2px;}
+.cat-sub{font-size:11px;color:var(--sub);}
+.cat-pill{font-family:var(--mono);font-size:10px;color:var(--dim);background:var(--sf3);border:1px solid var(--bd);padding:2px 8px;border-radius:20px;}
+.cat-arr{color:var(--dim);font-size:16px;}
+
+/* ===== QUIZ ===== */
+.qprog-bar{height:3px;background:var(--bd);flex-shrink:0;}
+.qprog-fill{height:100%;background:linear-gradient(90deg,var(--ac),var(--pu));transition:width .4s ease;}
+
+.quiz-body{display:flex;flex-direction:column;gap:13px;padding:14px 12px 32px;}
+
+.q-card{background:var(--sf);border:1px solid var(--bd);border-radius:var(--r);padding:18px;}
+.q-label{font-family:var(--mono);font-size:10px;color:var(--ac);letter-spacing:.1em;text-transform:uppercase;margin-bottom:10px;}
+.q-text{font-size:14px;line-height:1.75;color:var(--tx);font-weight:500;}
+.q-code{font-family:var(--mono);background:var(--sf3);border:1px solid var(--bd);color:var(--ye);padding:10px 12px;border-radius:8px;font-size:12px;line-height:1.7;margin-top:10px;white-space:pre;overflow-x:auto;}
+
+.choices{display:flex;flex-direction:column;gap:8px;}
+.choice{width:100%;background:var(--sf);border:1px solid var(--bd);border-radius:var(--rs);padding:13px 14px;display:flex;align-items:center;gap:11px;cursor:pointer;text-align:left;}
+.choice:not(:disabled):active{transform:scale(.98);}
+.choice:not(:disabled):hover{background:var(--sf2);}
+.ckey{width:26px;height:26px;border-radius:6px;background:var(--sf3);border:1px solid var(--bd);display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-size:11px;font-weight:700;color:var(--sub);flex-shrink:0;}
+.ctxt{font-family:var(--mono);font-size:12px;color:var(--tx);line-height:1.5;flex:1;}
+.choice.ok{background:var(--gg);border-color:var(--gr);}
+.choice.ok .ckey{background:var(--gr);border-color:var(--gr);color:#fff;}
+.choice.ng{background:var(--rg);border-color:var(--rd);}
+.choice.ng .ckey{background:var(--rd);border-color:var(--rd);color:#fff;}
+.choice.rev{background:rgba(46,204,143,.07);border-color:rgba(46,204,143,.35);}
+.choice.rev .ckey{background:rgba(46,204,143,.25);border-color:var(--gr);color:var(--gr);}
+.choice:disabled{cursor:default;}
+
+.feedback{border-radius:var(--r);padding:14px 16px;display:none;border:1px solid transparent;}
+.feedback.ok{display:block;background:var(--gg);border-color:rgba(46,204,143,.3);}
+.feedback.ng{display:block;background:var(--rg);border-color:rgba(242,92,122,.3);}
+.fb-head{font-size:14px;font-weight:700;margin-bottom:7px;}
+.feedback.ok .fb-head{color:var(--gr);}
+.feedback.ng .fb-head{color:var(--rd);}
+.fb-ans{font-family:var(--mono);color:var(--ye);font-size:11px;background:var(--sf3);border:1px solid var(--bd);display:inline-block;padding:2px 8px;border-radius:4px;margin-bottom:8px;}
+.fb-exp{font-size:12px;color:var(--sub);line-height:1.75;}
+
+.next-wrap{padding:0 12px 12px;flex-shrink:0;}
+.next-btn{width:100%;padding:14px;border:none;border-radius:var(--rs);background:linear-gradient(135deg,var(--ac),#6366f1);color:#fff;font-family:var(--sans);font-size:14px;font-weight:700;cursor:pointer;display:none;}
+.next-btn.show{display:block;}
+.next-btn:active{opacity:.85;}
+
+/* ===== RESULT ===== */
+.res-body{flex:1;overflow-y:auto;display:flex;flex-direction:column;align-items:center;padding:36px 18px 48px;gap:18px;}
+.res-trophy{font-size:60px;}
+.res-card{width:100%;background:var(--sf);border:1px solid var(--bd);border-radius:var(--r);padding:22px 24px;}
+.rs-label{font-family:var(--mono);font-size:10px;color:var(--dim);letter-spacing:.1em;text-transform:uppercase;margin-bottom:6px;}
+.rs-num{font-family:var(--mono);font-size:52px;font-weight:700;line-height:1;}
+.rs-denom{font-size:13px;color:var(--sub);margin-top:2px;}
+.rs-bar-bg{height:5px;background:var(--bd);border-radius:3px;margin-top:14px;overflow:hidden;}
+.rs-bar{height:100%;border-radius:3px;width:0;transition:width .9s .2s ease;}
+.gp .rs-num,.gp .rs-bar{color:var(--ye);background:var(--ye);}
+.gg .rs-num,.gg .rs-bar{color:var(--gr);background:var(--gr);}
+.gok .rs-num,.gok .rs-bar{color:var(--ac);background:var(--ac);}
+.gb .rs-num,.gb .rs-bar{color:var(--rd);background:var(--rd);}
+.res-msg{font-size:14px;color:var(--tx);font-weight:500;line-height:1.6;text-align:center;}
+.res-note{width:100%;background:rgba(167,139,250,.1);border:1px solid rgba(167,139,250,.25);border-radius:var(--rs);padding:13px 16px;font-size:12px;color:var(--sub);line-height:1.7;}
+.res-note strong{color:var(--pu);}
+.res-btn{width:100%;padding:14px;border:none;border-radius:var(--rs);background:linear-gradient(135deg,var(--ac),#6366f1);color:#fff;font-size:14px;font-weight:700;cursor:pointer;}
+.res-btn:active{opacity:.85;}
+
+/* ===== TOAST ===== */
+.toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(60px);background:var(--sf3);border:1px solid var(--bd);border-radius:24px;padding:9px 18px;font-size:12px;color:var(--sub);white-space:nowrap;transition:transform .25s ease;z-index:999;pointer-events:none;}
+.toast.show{transform:translateX(-50%) translateY(0);}
+</style>
+</head>
+<body>
+<div id="app">
+
+<!-- ① ホーム -->
+<div class="page active" id="pg-home">
+  <div class="pscroll">
+    <div class="home-head">
+      <div class="logo">
+        <div class="logo-box">&lt;/&gt;</div>
+        <div class="logo-name">Code<span>Quiz</span></div>
+      </div>
+    </div>
+    <div class="sec-label">復習</div>
+    <div class="rev-banner" id="rev-banner" onclick="startReview()">
+      <div class="rev-icon">🔁</div>
+      <div class="rev-body">
+        <div class="rev-title">間違えた問題を復習する</div>
+        <div class="rev-sub" id="rev-sub">復習リストは空です</div>
+      </div>
+      <div class="rev-badge" id="rev-badge">0</div>
+    </div>
+    <div class="rev-tools">
+      <button class="rev-mini-btn" onclick="clearReviewList(event)">復習リストを空にする</button>
+      <button class="rev-mini-btn" onclick="clearProgress(event)">進捗をリセット</button>
+    </div>
+    <div class="sec-label">言語を選ぶ</div>
+    <div class="lang-list" id="lang-list"></div>
+  </div>
+</div>
+
+<!-- ② カテゴリー -->
+<div class="page" id="pg-cat">
+  <div class="topbar">
+    <div class="tbback" onclick="nav('pg-home')">←</div>
+    <div>
+      <div class="tbtitle" id="cat-title">カテゴリー</div>
+      <div class="tbsub" id="cat-sub"></div>
+    </div>
+  </div>
+  <div class="pscroll">
+    <div class="cat-list" id="cat-list"></div>
+  </div>
+</div>
+
+<!-- ③ クイズ -->
+<div class="page" id="pg-quiz">
+  <div class="topbar">
+    <div class="tbback" onclick="backFromQuiz()">←</div>
+    <div style="flex:1">
+      <div class="tbtitle" id="qtitle"></div>
+      <div class="tbsub" id="qsub"></div>
+    </div>
+  </div>
+  <div class="qprog-bar"><div class="qprog-fill" id="qprog"></div></div>
+  <div class="pscroll">
+    <div class="quiz-body">
+      <div class="q-card">
+        <div class="q-label">Question</div>
+        <div class="q-text" id="qtext"></div>
+      </div>
+      <div class="choices" id="choices"></div>
+      <div class="feedback" id="feedback">
+        <div class="fb-head" id="fb-head"></div>
+        <div id="fb-ans"></div>
+        <div class="fb-exp" id="fb-exp"></div>
+      </div>
+    </div>
+  </div>
+  <div class="next-wrap">
+    <button class="next-btn" id="next-btn" onclick="nextQ()">次の問題へ →</button>
+  </div>
+</div>
+
+<!-- ④ 結果 -->
+<div class="page" id="pg-result">
+  <div class="topbar">
+    <div class="tbback" onclick="nav('pg-home')">✕</div>
+    <div><div class="tbtitle">結果</div></div>
+  </div>
+  <div class="res-body">
+    <div class="res-trophy" id="res-trophy">🏆</div>
+    <div class="res-card" id="res-card">
+      <div class="rs-label">Score</div>
+      <div class="rs-num" id="rs-num">0</div>
+      <div class="rs-denom" id="rs-denom">/ 0 問中</div>
+      <div class="rs-bar-bg"><div class="rs-bar" id="rs-bar"></div></div>
+    </div>
+    <div class="res-msg" id="res-msg"></div>
+    <div class="res-note" id="res-note" style="display:none"></div>
+    <button class="res-btn" onclick="nav('pg-home')">メインメニューへ戻る</button>
+  </div>
+</div>
+
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+
+// ================================================================
+// DATA
+// ================================================================
+const DATA = {
+  "python": {
+    "title": "Python",
+    "emoji": "🐍",
+    "desc": "データ・AI・自動化に強い汎用言語",
+    "categories": {
+      "output": {
+        "title": "基本の出力（print）",
+        "icon": "📤",
+        "questions": [
+          {
+            "q": "画面に『Hello』と表示する正しいコードは？",
+            "exp": "Pythonで画面（コンソール）に文字を表示するときは print() 関数を使います。文字列はクォートで囲み、print('Hello') のように書きます。",
+            "choices": [
+              {
+                "text": "print('Hello')",
+                "correct": true,
+                "reason": "正解。Pythonで画面（コンソール）に文字を表示するときは print() 関数を使います。文字列はクォートで囲み、print('Hello') のように書きます。"
+              },
+              {
+                "text": "echo('Hello')",
+                "correct": false,
+                "reason": "不正解。echo はPHPやシェルで見かける出力の書き方です。Pythonの標準出力では print() を使います。"
+              },
+              {
+                "text": "console.log('Hello')",
+                "correct": false,
+                "reason": "不正解。console.log() はJavaScriptでブラウザのコンソールに出力するときの書き方です。Pythonでは使いません。"
+              },
+              {
+                "text": "System.out.println('Hello')",
+                "correct": false,
+                "reason": "不正解。System.out.println はJavaの代表的な出力方法です。Pythonでは print('Hello') と短く書きます。"
+              }
+            ]
+          },
+          {
+            "q": "複数の値を渡したとき、値の間に入るデフォルトの文字は？",
+            "exp": "Pythonの print() に複数の値を渡すと、値の間にはデフォルトで半角スペースが入ります。変更したい場合は sep='-' のように sep 引数を指定します。",
+            "choices": [
+              {
+                "text": "スペース（半角）",
+                "correct": true,
+                "reason": "正解。Pythonの print() に複数の値を渡すと、値の間にはデフォルトで半角スペースが入ります。変更したい場合は sep='-' のように sep 引数を指定します。"
+              },
+              {
+                "text": "カンマ（,）",
+                "correct": false,
+                "reason": "不正解。正解の「スペース（半角）」と比べると、文法・キーワード・用途のどこかが問題文と合っていません。"
+              },
+              {
+                "text": "何も入らない",
+                "correct": false,
+                "reason": "不正解。正解の「スペース（半角）」と比べると、文法・キーワード・用途のどこかが問題文と合っていません。"
+              },
+              {
+                "text": "タブ文字",
+                "correct": false,
+                "reason": "不正解。タブ区切りにしたい場合は sep='\\t' のように明示する必要があります。デフォルトは半角スペースです。"
+              }
+            ]
+          },
+          {
+            "q": "print()で改行なしに出力するには？",
+            "exp": "print() は標準では最後に改行を付けます。改行したくないときは end='' を指定して、末尾に入る文字を空文字にします。",
+            "choices": [
+              {
+                "text": "print('text', end='')",
+                "correct": true,
+                "reason": "正解。print() の end 引数は末尾に付ける文字を指定します。end='' にすると改行が付きません。"
+              },
+              {
+                "text": "print('text', newline=False)",
+                "correct": false,
+                "reason": "不正解。Pythonの print() に newline という引数はありません。改行制御には end を使います。"
+              },
+              {
+                "text": "print('text\\n')",
+                "correct": false,
+                "reason": "不正解。正解の「print('text', end='')」と比べると、文法・キーワード・用途のどこかが問題文と合っていません。"
+              },
+              {
+                "text": "nprint('text')",
+                "correct": false,
+                "reason": "不正解。nprint() というPython標準関数はありません。print() の引数で制御します。"
+              }
+            ]
+          },
+          {
+            "q": "変数 name='World' のとき 'Hello World' と出力するには？",
+            "exp": "Pythonでは f文字列を使うと、文字列の中に変数を埋め込めます。f'Hello {name}' の {name} が変数 name の中身に置き換わります。",
+            "choices": [
+              {
+                "text": "print(f'Hello {name}')",
+                "correct": true,
+                "reason": "正解。f文字列なので {name} が変数 name の中身 World に置き換わり、Hello World と出力されます。"
+              },
+              {
+                "text": "print('Hello' + name)",
+                "correct": false,
+                "reason": "不正解。これは HelloWorld になり、間のスペースがありません。'Hello ' + name なら近いですが、問題の選択肢としては不十分です。"
+              },
+              {
+                "text": "print('Hello {name}')",
+                "correct": false,
+                "reason": "不正解。先頭に f がない普通の文字列なので、{name} は変数ではなくそのまま文字として表示されます。"
+              },
+              {
+                "text": "print('Hello',+name)",
+                "correct": false,
+                "reason": "不正解。+name は数値の符号のような扱いになり、文字列 name には使えません。カンマで区切るなら print('Hello', name) です。"
+              }
+            ]
+          },
+          {
+            "q": "print('a','b',sep='-') の出力結果は？",
+            "exp": "sep は print() に複数の値を渡したとき、値と値の間に入る文字を指定します。sep='-' なら a と b の間に - が入ります。",
+            "choices": [
+              {
+                "text": "a-b",
+                "correct": true,
+                "reason": "正解。sep は print() に複数の値を渡したとき、値と値の間に入る文字を指定します。sep='-' なら a と b の間に - が入ります。"
+              },
+              {
+                "text": "a b",
+                "correct": false,
+                "reason": "不正解。これは sep を指定しない場合のデフォルトに近い出力です。今回は sep='-' が指定されています。"
+              },
+              {
+                "text": "a,b",
+                "correct": false,
+                "reason": "不正解。コード上ではカンマで引数を区切っていますが、出力の区切りは sep で指定された '-' になります。"
+              },
+              {
+                "text": "ab",
+                "correct": false,
+                "reason": "不正解。sep='' なら ab になりますが、今回は sep='-' なので a-b です。"
+              }
+            ]
+          },
+          {
+            "q": "数値 42 を文字列として扱う変換関数は？",
+            "exp": "数値を文字列として扱いたいときは str() を使います。たとえば str(42) は '42' という文字列になります。",
+            "choices": [
+              {
+                "text": "str(42)",
+                "correct": true,
+                "reason": "正解。数値を文字列として扱いたいときは str() を使います。たとえば str(42) は '42' という文字列になります。"
+              },
+              {
+                "text": "string(42)",
+                "correct": false,
+                "reason": "不正解。Pythonには標準で string() という変換関数はありません。文字列化は str() です。"
+              },
+              {
+                "text": "int(42)",
+                "correct": false,
+                "reason": "不正解。正解の「str(42)」と比べると、文法・キーワード・用途のどこかが問題文と合っていません。"
+              },
+              {
+                "text": "chr(42)",
+                "correct": false,
+                "reason": "不正解。chr() は文字コード番号から1文字を作る関数です。数値を'42'という文字列にする用途ではありません。"
+              }
+            ]
+          }
+        ]
+      },
+      "if_stmt": {
+        "title": "条件分岐（if文）",
+        "icon": "🔀",
+        "questions": [
+          {
+            "q": "変数 x が 10 と等しいか判定する正しい条件式は？",
+            "exp": "Pythonで『等しいか』を比較するときは == を使います。if文では条件の後に : を付け、その下にインデントして処理を書きます。",
+            "choices": [
+              {
+                "text": "if x == 10:",
+                "correct": true,
+                "reason": "正解。Pythonで『等しいか』を比較するときは == を使います。if文では条件の後に : を付け、その下にインデントして処理を書きます。"
+              },
+              {
+                "text": "if x = 10:",
+                "correct": false,
+                "reason": "不正解。正解の「if x == 10:」と比べると、文法・キーワード・用途のどこかが問題文と合っていません。"
+              },
+              {
+                "text": "if x === 10",
+                "correct": false,
+                "reason": "不正解。=== はJavaScriptの厳密等価演算子です。Pythonでは使わず、さらに末尾の : もありません。"
+              },
+              {
+                "text": "if (x == 10)",
+                "correct": false,
+                "reason": "不正解。Pythonでも条件を丸括弧で囲むこと自体はできますが、この選択肢は末尾の : がないためif文として不完全です。"
+              }
+            ]
+          },
+          {
+            "q": "x=5 のとき次のコードの出力は？\nif x > 3:\n    print('A')\nelse:\n    print('B')",
+            "exp": "x は 5 なので、条件 x > 3 は True です。そのため if 側の print('A') が実行され、else 側は実行されません。",
+            "choices": [
+              {
+                "text": "A",
+                "correct": true,
+                "reason": "正解。x は 5 なので、条件 x > 3 は True です。そのため if 側の print('A') が実行され、else 側は実行されません。"
+              },
+              {
+                "text": "B",
+                "correct": false,
+                "reason": "不正解。Bが出るのは条件がFalseでelse側に進んだ場合です。今回は条件がTrueです。"
+              },
+              {
+                "text": "エラー",
+                "correct": false,
+                "reason": "不正解。正解の「A」と比べると、文法・キーワード・用途のどこかが問題文と合っていません。"
+              },
+              {
+                "text": "何も表示されない",
+                "correct": false,
+                "reason": "不正解。正解の「A」と比べると、文法・キーワード・用途のどこかが問題文と合っていません。"
+              }
+            ]
+          },
+          {
+            "q": "x = 0 のとき「if x:」は何として評価される？",
+            "exp": "Pythonでは 0, 空文字, None, 空リストなどは False として扱われます。このような値を Falsy（偽として扱われる値）と呼びます。",
+            "choices": [
+              {
+                "text": "False",
+                "correct": true,
+                "reason": "正解。Pythonでは 0, 空文字, None, 空リストなどは False として扱われます。このような値を Falsy（偽として扱われる値）と呼びます。"
+              },
+              {
+                "text": "True",
+                "correct": false,
+                "reason": "不正解。正解の「False」と比べると、文法・キーワード・用途のどこかが問題文と合っていません。"
+              },
+              {
+                "text": "エラー",
+                "correct": false,
+                "reason": "不正解。正解の「False」と比べると、文法・キーワード・用途のどこかが問題文と合っていません。"
+              },
+              {
+                "text": "None",
+                "correct": false,
+                "reason": "不正解。Noneは値そのものです。if文の判定結果としてはTrueかFalseになります。"
+              }
+            ]
+          },
+          {
+            "q": "AND条件の正しい書き方は？",
+            "exp": "Pythonで複数条件を同時に満たすか判定するときは and を使います。if文の行末には : が必要です。 Pythonは読みやすさを重視した言語です。記号の意味と、実際に返る値をセットで覚えると理解しやすくなります。",
+            "choices": [
+              {
+                "text": "if x > 0 and x < 10:",
+                "correct": true,
+                "reason": "正解。Pythonで複数条件を同時に満たすか判定するときは and を使います。if文の行末には : が必要です。 Pythonは読みやすさを重視した言語です。記号の意味と、実際に返る値をセットで覚えると理解しやすくなります。"
+              },
+              {
+                "text": "if x > 0 && x < 10:",
+                "correct": false,
+                "reason": "不正解。&& はJavaScriptやC系言語で使うANDです。Pythonでは and と書きます。"
+              },
+              {
+                "text": "if x > 0 & x < 10:",
+                "correct": false,
+                "reason": "不正解。正解の「if x > 0 and x < 10:」と比べると、文法・キーワード・用途のどこかが問題文と合っていません。"
+              },
+              {
+                "text": "if (x>0 and x<10)",
+                "correct": false,
+                "reason": "不正解。条件式の考え方は近いですが、Pythonのif文としては末尾の : がありません。"
+              }
+            ]
+          },
+          {
+            "q": "if, elif, else のうち省略できないのは？",
+            "exp": "Pythonの条件分岐では if が必須です。elif は追加条件、else はどの条件にも当てはまらない場合に必要なら書きます。",
+            "choices": [
+              {
+                "text": "ifのみ",
+                "correct": true,
+                "reason": "正解。Pythonの条件分岐では if が必須です。elif は追加条件、else はどの条件にも当てはまらない場合に必要なら書きます。"
+              },
+              {
+                "text": "ifとelif",
+                "correct": false,
+                "reason": "不正解。正解の「ifのみ」と比べると、文法・キーワード・用途のどこかが問題文と合っていません。"
+              },
+              {
+                "text": "ifとelse",
+                "correct": false,
+                "reason": "不正解。else は条件がFalseだったときの処理を書きたい場合だけ使います。省略できます。"
+              },
+              {
+                "text": "すべて必須",
+                "correct": false,
+                "reason": "不正解。正解の「ifのみ」と比べると、文法・キーワード・用途のどこかが問題文と合っていません。"
+              }
+            ]
+          },
+          {
+            "q": "x=15のとき「if x%2==0: print('偶数') else: print('奇数')」の出力は？",
+            "exp": "% は割った余りを求める演算子です。15 % 2 は 1 なので x%2==0 はFalseとなり、else側の『奇数』が出力されます。",
+            "choices": [
+              {
+                "text": "奇数",
+                "correct": true,
+                "reason": "正解。% は割った余りを求める演算子です。15 % 2 は 1 なので x%2==0 はFalseとなり、else側の『奇数』が出力されます。"
+              },
+              {
+                "text": "偶数",
+                "correct": false,
+                "reason": "不正解。正解の「奇数」と比べると、文法・キーワード・用途のどこかが問題文と合っていません。"
+              },
+              {
+                "text": "エラー",
+                "correct": false,
+                "reason": "不正解。正解の「奇数」と比べると、文法・キーワード・用途のどこかが問題文と合っていません。"
+              },
+              {
+                "text": "0",
+                "correct": false,
+                "reason": "不正解。正解の「奇数」と比べると、文法・キーワード・用途のどこかが問題文と合っていません。"
+              }
+            ]
+          },
+          {
+            "q": "Pythonで『xが10以上かつ20未満』を判定する自然な書き方は？",
+            "exp": "Pythonでは比較を数学のようにつなげて 10 <= x < 20 と書けます。これは『10以上かつ20未満』を自然に表します。",
+            "choices": [
+              {
+                "text": "if 10 <= x < 20:",
+                "correct": true,
+                "reason": "正解。Pythonでは比較を数学のようにつなげて 10 <= x < 20 と書けます。これは『10以上かつ20未満』を自然に表します。"
+              },
+              {
+                "text": "if x >= 10 && x < 20:",
+                "correct": false,
+                "reason": "不正解。&& はJavaScriptなどのANDです。Pythonでは and を使うか、10 <= x < 20 と書けます。"
+              },
+              {
+                "text": "if x between 10 and 20:",
+                "correct": false,
+                "reason": "不正解。SQLにはBETWEENがありますが、Pythonのif文ではこのようには書きません。"
+              },
+              {
+                "text": "if 10 <= x && x < 20:",
+                "correct": false,
+                "reason": "不正解。正解の「if 10 <= x < 20:」と比べると、文法・キーワード・用途のどこかが問題文と合っていません。"
+              }
+            ]
+          },
+          {
+            "q": "elif が使われる目的は？",
+            "exp": "elif は else if のような役割で、複数の条件を上から順番に判定します。最初にTrueになったブロックだけが実行されます。",
+            "choices": [
+              {
+                "text": "複数条件を上から順番に判定する",
+                "correct": true,
+                "reason": "正解。elif は else if のような役割で、複数の条件を上から順番に判定します。最初にTrueになったブロックだけが実行されます。"
+              },
+              {
+                "text": "if文を終了する",
+                "correct": false,
+                "reason": "不正解。正解の「複数条件を上から順番に判定する」と比べると、文法・キーワード・用途のどこかが問題文と合っていません。"
+              },
+              {
+                "text": "条件をすべて同時に実行する",
+                "correct": false,
+                "reason": "不正解。正解の「複数条件を上から順番に判定する」と比べると、文法・キーワード・用途のどこかが問題文と合っていません。"
+              },
+              {
+                "text": "エラーを無視する",
+                "correct": false,
+                "reason": "不正解。エラー処理には try / except などを使います。elifは条件分岐です。"
+              }
+            ]
+          }
+        ]
+      },
+      "loops": {
+        "title": "繰り返し（for / while）",
+        "icon": "🔄",
+        "questions": [
+          {
+            "q": "0から4まで（0,1,2,3,4）を生成するrange()の書き方は？",
+            "exp": "range() は連続した数値を作るときに使います。range(5) は 0,1,2,3,4 を生成します。終了値の5は含まれない点が重要です。",
+            "choices": [
+              {
+                "text": "range(5)",
+                "correct": true,
+                "reason": "正解。range() は連続した数値を作るときに使います。range(5) は 0,1,2,3,4 を生成します。終了値の5は含まれない点が重要です。"
+              },
+              {
+                "text": "range(1,5)",
+                "correct": false,
+                "reason": "不正解。正解の「range(5)」と比べると、文法・キーワード・用途のどこかが問題文と合っていません。"
+              },
+              {
+                "text": "range(0,4)",
+                "correct": false,
+                "reason": "不正解。正解の「range(5)」と比べると、文法・キーワード・用途のどこかが問題文と合っていません。"
+              },
+              {
+                "text": "range(0,5,2)",
+                "correct": false,
+                "reason": "不正解。これは 0,2,4 のように2つ飛ばしです。0〜4をすべて生成する書き方ではありません。"
+              }
+            ]
+          },
+          {
+            "q": "リスト [1,2,3] の合計を求める組み込み関数は？",
+            "exp": "Pythonで数値の集まりの合計を求めるには sum() を使います。sum([1,2,3]) は 1+2+3 を計算して 6 を返します。",
+            "choices": [
+              {
+                "text": "sum([1,2,3])",
+                "correct": true,
+                "reason": "正解。Pythonで数値の集まりの合計を求めるには sum() を使います。sum([1,2,3]) は 1+2+3 を計算して 6 を返します。"
+              },
+              {
+                "text": "[1,2,3].sum()",
+                "correct": false,
+                "reason": "不正解。Pythonの通常のlistには sum() メソッドはありません。NumPy配列などでは見かけますが、この問題では組み込み関数 sum() が正解です。"
+              },
+              {
+                "text": "total([1,2,3])",
+                "correct": false,
+                "reason": "不正解。正解の「sum([1,2,3])」と比べると、文法・キーワード・用途のどこかが問題文と合っていません。"
+              },
+              {
+                "text": "add([1,2,3])",
+                "correct": false,
+                "reason": "不正解。正解の「sum([1,2,3])」と比べると、文法・キーワード・用途のどこかが問題文と合っていません。"
+              }
+            ]
+          },
+          {
+            "q": "while ループを強制終了するキーワードは？",
+            "exp": "ループの途中で処理を抜けたいときは break を使います。continue は今回の繰り返しだけを飛ばして次の周回へ進むキーワードです。",
+            "choices": [
+              {
+                "text": "break",
+                "correct": true,
+                "reason": "正解。ループの途中で処理を抜けたいときは break を使います。continue は今回の繰り返しだけを飛ばして次の周回へ進むキーワードです。"
+              },
+              {
+                "text": "stop",
+                "correct": false,
+                "reason": "不正解。正解の「break」と比べると、文法・キーワード・用途のどこかが問題文と合っていません。"
+              },
+              {
+                "text": "exit",
+                "correct": false,
+                "reason": "不正解。exit() は対話環境などを終了するためのものとして見かけますが、ループを抜ける基本は break です。"
+              },
+              {
+                "text": "end",
+                "correct": false,
+                "reason": "不正解。Pythonではブロック終了に end は使いません。インデントで範囲を表します。"
+              }
+            ]
+          },
+          {
+            "q": "for i in range(3): print(i) の出力は？",
+            "exp": "range(3) は 0,1,2 を順番に生成します。for文の中で print(i) するので、それぞれの値が各行に表示されます。",
+            "choices": [
+              {
+                "text": "0 1 2（各行）",
+                "correct": true,
+                "reason": "正解。range(3) は 0,1,2 を順番に生成します。for文の中で print(i) するので、それぞれの値が各行に表示されます。"
+              },
+              {
+                "text": "1 2 3（各行）",
+                "correct": false,
+                "reason": "不正解。正解の「0 1 2（各行）」と比べると、文法・キーワード・用途のどこかが問題文と合っていません。"
+              },
+              {
+                "text": "0 1 2 3（各行）",
+                "correct": false,
+                "reason": "不正解。正解の「0 1 2（各行）」と比べると、文法・キーワード・用途のどこかが問題文と合っていません。"
+              },
+              {
+                "text": "エラー",
+                "correct": false,
+                "reason": "不正解。for i in range(3): print(i) はPythonとして正しい処理です。"
+              }
+            ]
+          },
+          {
+            "q": "リスト内包表記で [0,1,4,9,16] を生成するコードは？",
+            "exp": "リスト内包表記は [式 for 変数 in 繰り返し対象] の形です。x**2 は二乗なので、0〜4の二乗がリストになります。",
+            "choices": [
+              {
+                "text": "[x**2 for x in range(5)]",
+                "correct": true,
+                "reason": "正解。リスト内包表記は [式 for 変数 in 繰り返し対象] の形です。x**2 は二乗なので、0〜4の二乗がリストになります。"
+              },
+              {
+                "text": "[x^2 for x in range(5)]",
+                "correct": false,
+                "reason": "不正解。正解の「[x**2 for x in range(5)]」と比べると、文法・キーワード・用途のどこかが問題文と合っていません。"
+              },
+              {
+                "text": "(x**2 for x in range(5))",
+                "correct": false,
+                "reason": "不正解。正解の「[x**2 for x in range(5)]」と比べると、文法・キーワード・用途のどこかが問題文と合っていません。"
+              },
+              {
+                "text": "list(x**2 in range(5))",
+                "correct": false,
+                "reason": "不正解。リスト内包表記の構文になっていません。[式 for 変数 in 対象] の形で書きます。"
+              }
+            ]
+          },
+          {
+            "q": "enumerate()を使う主な目的は？",
+            "exp": "enumerate() は繰り返し中に『何番目か』と『値』を同時に取り出したいときに使います。 Pythonは読みやすさを重視した言語です。記号の意味と、実際に返る値をセットで覚えると理解しやすくなります。",
+            "choices": [
+              {
+                "text": "インデックスと値を同時に取得",
+                "correct": true,
+                "reason": "正解。enumerate() は繰り返し中に『何番目か』と『値』を同時に取り出したいときに使います。 Pythonは読みやすさを重視した言語です。記号の意味と、実際に返る値をセットで覚えると理解しやすくなります。"
+              },
+              {
+                "text": "リストを逆順にする",
+                "correct": false,
+                "reason": "不正解。正解の「インデックスと値を同時に取得」と比べると、文法・キーワード・用途のどこかが問題文と合っていません。"
+              },
+              {
+                "text": "重複を除去する",
+                "correct": false,
+                "reason": "不正解。重複除去には set() などを使います。enumerate() は番号付けです。"
+              },
+              {
+                "text": "ソートする",
+                "correct": false,
+                "reason": "不正解。正解の「インデックスと値を同時に取得」と比べると、文法・キーワード・用途のどこかが問題文と合っていません。"
+              }
+            ]
+          }
+        ]
+      },
+      "functions": {
+        "title": "関数（def）",
+        "icon": "⚙️",
+        "questions": [
+          {
+            "q": "Pythonで関数を定義するキーワードは？",
+            "exp": "Pythonで関数を作るには def を使います。def 関数名(): の下にインデントして処理を書きます。 Pythonは読みやすさを重視した言語です。記号の意味と、実際に返る値をセットで覚えると理解しやすくなります。",
+            "choices": [
+              {
+                "text": "def",
+                "correct": true,
+                "reason": "正解。Pythonで関数を作るには def を使います。def 関数名(): の下にインデントして処理を書きます。 Pythonは読みやすさを重視した言語です。記号の意味と、実際に返る値をセットで覚えると理解しやすくなります。"
+              },
+              {
+                "text": "function",
+                "correct": false,
+                "reason": "不正解。function はJavaScriptなどで見かける関数定義キーワードです。Pythonでは def です。"
+              },
+              {
+                "text": "func",
+                "correct": false,
+                "reason": "不正解。func はGoやSwiftなどで見かけますが、Pythonの関数定義では使いません。"
+              },
+              {
+                "text": "fn",
+                "correct": false,
+                "reason": "不正解。fn はRustなどで使われる関数定義キーワードです。Pythonでは def です。"
+              }
+            ]
+          },
+          {
+            "q": "デフォルト引数を持つ関数の正しい書き方は？",
+            "exp": "デフォルト引数は、引数が省略されたときに使う初期値です。Pythonでは def greet(name='World'): のように 引数名=値 と書きます。",
+            "choices": [
+              {
+                "text": "def greet(name='World'):",
+                "correct": true,
+                "reason": "正解。デフォルト引数は、引数が省略されたときに使う初期値です。Pythonでは def greet(name='World'): のように 引数名=値 と書きます。"
+              },
+              {
+                "text": "def greet(name='World')",
+                "correct": false,
+                "reason": "不正解。正解の「def greet(name='World'):」と比べると、文法・キーワード・用途のどこかが問題文と合っていません。"
+              },
+              {
+                "text": "def greet(name=World):",
+                "correct": false,
+                "reason": "不正解。World が文字列ならクォートで囲む必要があります。このままだと変数Worldとして扱われます。"
+              },
+              {
+                "text": "def greet(name default 'World'):",
+                "correct": false,
+                "reason": "不正解。Pythonでは default という語を挟まず、name='World' と書きます。"
+              }
+            ]
+          },
+          {
+            "q": "関数から値を返すキーワードは？",
+            "exp": "関数の計算結果を呼び出し元に返すには return を使います。print() は表示するだけで、値を返す用途とは別です。",
+            "choices": [
+              {
+                "text": "return",
+                "correct": true,
+                "reason": "正解。関数の計算結果を呼び出し元に返すには return を使います。print() は表示するだけで、値を返す用途とは別です。"
+              },
+              {
+                "text": "yield",
+                "correct": false,
+                "reason": "不正解。yield はジェネレータで値を1つずつ返す特殊なキーワードです。通常の関数の戻り値は return です。"
+              },
+              {
+                "text": "output",
+                "correct": false,
+                "reason": "不正解。正解の「return」と比べると、文法・キーワード・用途のどこかが問題文と合っていません。"
+              },
+              {
+                "text": "give",
+                "correct": false,
+                "reason": "不正解。正解の「return」と比べると、文法・キーワード・用途のどこかが問題文と合っていません。"
+              }
+            ]
+          },
+          {
+            "q": "任意個数の引数を受け取る関数定義は？",
+            "exp": "Pythonでは *args を使うと、位置引数をいくつでも受け取れます。受け取った値はタプルとして扱われます。",
+            "choices": [
+              {
+                "text": "def f(*args):",
+                "correct": true,
+                "reason": "正解。Pythonでは *args を使うと、位置引数をいくつでも受け取れます。受け取った値はタプルとして扱われます。"
+              },
+              {
+                "text": "def f(args[]):",
+                "correct": false,
+                "reason": "不正解。正解の「def f(*args):」と比べると、文法・キーワード・用途のどこかが問題文と合っていません。"
+              },
+              {
+                "text": "def f(...args):",
+                "correct": false,
+                "reason": "不正解。...args はJavaScriptのレスト構文に近い考え方です。Pythonでは *args です。"
+              },
+              {
+                "text": "def f(args*):",
+                "correct": false,
+                "reason": "不正解。正解の「def f(*args):」と比べると、文法・キーワード・用途のどこかが問題文と合っていません。"
+              }
+            ]
+          },
+          {
+            "q": "ラムダ（無名）関数の正しい書き方は？",
+            "exp": "lambda は名前を付けずに小さな関数を作る構文です。lambda 引数: 式 の形で、式の結果が返ります。",
+            "choices": [
+              {
+                "text": "lambda x: x*2",
+                "correct": true,
+                "reason": "正解。lambda は名前を付けずに小さな関数を作る構文です。lambda 引数: 式 の形で、式の結果が返ります。"
+              },
+              {
+                "text": "fn x: x*2",
+                "correct": false,
+                "reason": "不正解。正解の「lambda x: x*2」と比べると、文法・キーワード・用途のどこかが問題文と合っていません。"
+              },
+              {
+                "text": "x => x*2",
+                "correct": false,
+                "reason": "不正解。これはJavaScriptのアロー関数の書き方です。Pythonでは lambda を使います。"
+              },
+              {
+                "text": "def(x): x*2",
+                "correct": false,
+                "reason": "不正解。def は通常の関数定義に使いますが、この形はPythonの正しい構文ではありません。"
+              }
+            ]
+          },
+          {
+            "q": "関数内で定義した変数のスコープは？",
+            "exp": "関数の中で作った変数は基本的にローカル変数です。関数の外から直接は参照できません。 Pythonは読みやすさを重視した言語です。記号の意味と、実際に返る値をセットで覚えると理解しやすくなります。",
+            "choices": [
+              {
+                "text": "ローカル（関数内のみ有効）",
+                "correct": true,
+                "reason": "正解。関数の中で作った変数は基本的にローカル変数です。関数の外から直接は参照できません。 Pythonは読みやすさを重視した言語です。記号の意味と、実際に返る値をセットで覚えると理解しやすくなります。"
+              },
+              {
+                "text": "グローバル",
+                "correct": false,
+                "reason": "不正解。関数外で定義された変数はグローバルになることがありますが、関数内の変数は基本的にローカルです。"
+              },
+              {
+                "text": "モジュール全体",
+                "correct": false,
+                "reason": "不正解。正解の「ローカル（関数内のみ有効）」と比べると、文法・キーワード・用途のどこかが問題文と合っていません。"
+              },
+              {
+                "text": "クラス内",
+                "correct": false,
+                "reason": "不正解。正解の「ローカル（関数内のみ有効）」と比べると、文法・キーワード・用途のどこかが問題文と合っていません。"
+              }
+            ]
+          }
+        ]
+      },
+      "lists": {
+        "title": "リストの操作",
+        "icon": "📋",
+        "questions": [
+          {
+            "q": "リストの末尾に要素を追加するメソッドは？",
+            "exp": "Pythonのリストで末尾に1つの要素を追加するには append() を使います。 Pythonは読みやすさを重視した言語です。記号の意味と、実際に返る値をセットで覚えると理解しやすくなります。",
+            "choices": [
+              {
+                "text": "append()",
+                "correct": true,
+                "reason": "正解。Pythonのリストで末尾に1つの要素を追加するには append() を使います。 Pythonは読みやすさを重視した言語です。記号の意味と、実際に返る値をセットで覚えると理解しやすくなります。"
+              },
+              {
+                "text": "push()",
+                "correct": false,
+                "reason": "不正解。push() はJavaScriptの配列で末尾追加に使うメソッドです。Pythonのリストでは append() です。"
+              },
+              {
+                "text": "add()",
+                "correct": false,
+                "reason": "不正解。set では add() を使いますが、list の末尾追加は append() です。"
+              },
+              {
+                "text": "insert()",
+                "correct": false,
+                "reason": "不正解。insert(i, x) は指定位置に挿入するメソッドです。末尾追加の基本は append() です。"
+              }
+            ]
+          },
+          {
+            "q": "リストから特定の値を削除するメソッドは？",
+            "exp": "Pythonのリストから値そのものを指定して削除するときは remove() を使います。インデックスで取り出して削除する場合は pop() です。",
+            "choices": [
+              {
+                "text": "remove()",
+                "correct": true,
+                "reason": "正解。Pythonのリストから値そのものを指定して削除するときは remove() を使います。インデックスで取り出して削除する場合は pop() です。"
+              },
+              {
+                "text": "delete()",
+                "correct": false,
+                "reason": "不正解。Pythonのリストに delete() メソッドはありません。del 文とは別です。"
+              },
+              {
+                "text": "pop()",
+                "correct": false,
+                "reason": "不正解。pop() はインデックス指定で削除し、削除した値を返します。値そのものを指定するなら remove() です。"
+              },
+              {
+                "text": "clear()",
+                "correct": false,
+                "reason": "不正解。clear() はリストの全要素を削除します。特定の値だけを削除するなら remove() です。"
+              }
+            ]
+          },
+          {
+            "q": "リスト lst の要素数を得るには？",
+            "exp": "Pythonではリストや文字列などの長さを調べるときに len() を使います。 Pythonは読みやすさを重視した言語です。記号の意味と、実際に返る値をセットで覚えると理解しやすくなります。",
+            "choices": [
+              {
+                "text": "len(lst)",
+                "correct": true,
+                "reason": "正解。Pythonではリストや文字列などの長さを調べるときに len() を使います。 Pythonは読みやすさを重視した言語です。記号の意味と、実際に返る値をセットで覚えると理解しやすくなります。"
+              },
+              {
+                "text": "lst.length",
+                "correct": false,
+                "reason": "不正解。length プロパティはJavaScriptの配列や文字列で見かける書き方です。Pythonでは len() です。"
+              },
+              {
+                "text": "lst.size()",
+                "correct": false,
+                "reason": "不正解。正解の「len(lst)」と比べると、文法・キーワード・用途のどこかが問題文と合っていません。"
+              },
+              {
+                "text": "count(lst)",
+                "correct": false,
+                "reason": "不正解。count は通常、特定の値がいくつあるか数える用途です。要素数は len() です。"
+              }
+            ]
+          },
+          {
+            "q": "lst=[10,20,30,40,50] で lst[1:3] の結果は？",
+            "exp": "Pythonのスライス lst[start:end] は start 以上 end 未満を取り出します。lst[1:3] はインデックス1と2を取り出します。",
+            "choices": [
+              {
+                "text": "[20,30]",
+                "correct": true,
+                "reason": "正解。Pythonのスライス lst[start:end] は start 以上 end 未満を取り出します。lst[1:3] はインデックス1と2を取り出します。"
+              },
+              {
+                "text": "[20,30,40]",
+                "correct": false,
+                "reason": "不正解。正解の「[20,30]」と比べると、文法・キーワード・用途のどこかが問題文と合っていません。"
+              },
+              {
+                "text": "[10,20,30]",
+                "correct": false,
+                "reason": "不正解。正解の「[20,30]」と比べると、文法・キーワード・用途のどこかが問題文と合っていません。"
+              },
+              {
+                "text": "[30,40]",
+                "correct": false,
+                "reason": "不正解。これはインデックス2から3を取るような結果です。lst[1:3] は20,30です。"
+              }
+            ]
+          },
+          {
+            "q": "2つのリストを結合するには？",
+            "exp": "Pythonでは + 演算子で2つのリストを結合できます。lst1 + lst2 は新しい結合リストを作ります。",
+            "choices": [
+              {
+                "text": "lst1 + lst2",
+                "correct": true,
+                "reason": "正解。Pythonでは + 演算子で2つのリストを結合できます。lst1 + lst2 は新しい結合リストを作ります。"
+              },
+              {
+                "text": "lst1.concat(lst2)",
+                "correct": false,
+                "reason": "不正解。concat() はJavaScriptの配列で見かけるメソッドです。Pythonのlistにはありません。"
+              },
+              {
+                "text": "merge(lst1,lst2)",
+                "correct": false,
+                "reason": "不正解。正解の「lst1 + lst2」と比べると、文法・キーワード・用途のどこかが問題文と合っていません。"
+              },
+              {
+                "text": "lst1.join(lst2)",
+                "correct": false,
+                "reason": "不正解。join() は文字列を連結するときによく使うメソッドで、リスト同士の結合には使いません。"
+              }
+            ]
+          },
+          {
+            "q": "リストを逆順にする方法は？",
+            "exp": "リストを逆順の新しいリストとして得たいときは lst[::-1] が簡単です。reversed(lst) はイテレータなので、リストにしたい場合は list(reversed(lst)) とします。",
+            "choices": [
+              {
+                "text": "lst[::-1] または list(reversed(lst))",
+                "correct": true,
+                "reason": "正解。lst[::-1] は逆順の新しいリストを作ります。list(reversed(lst)) でも同じように逆順リストを得られます。"
+              },
+              {
+                "text": "lst.reverse_copy()",
+                "correct": false,
+                "reason": "不正解。Pythonのlistに reverse_copy() という標準メソッドはありません。"
+              },
+              {
+                "text": "lst.sort(reverse)",
+                "correct": false,
+                "reason": "不正解。sort() は値の大小で並び替えるメソッドです。単純な逆順とは意味が違いますし、引数の書き方も不正確です。"
+              },
+              {
+                "text": "flip(lst)",
+                "correct": false,
+                "reason": "不正解。正解の「lst[::-1] または list(reversed(lst))」と比べると、文法・キーワード・用途のどこかが問題文と合っていません。"
+              }
+            ]
+          }
+        ]
+      }
+    }
+  },
+  "html": {
+    "title": "HTML",
+    "emoji": "🌐",
+    "desc": "Webページの構造を作るマークアップ言語",
+    "categories": {
+      "tags": {
+        "title": "基本タグ",
+        "icon": "🏷️",
+        "questions": [
+          {
+            "q": "最も大きい見出しを意味するタグは？",
+            "exp": "見出しタグはh1〜h6まであり、h1が最大（最重要）な見出しです。<head>はHTMLのメタ情報エリアです。",
+            "choices": [
+              {
+                "text": "<h1>",
+                "correct": true,
+                "reason": "正解。見出しタグはh1〜h6まであり、h1が最大（最重要）な見出しです。<head>はHTMLのメタ情報エリアです。"
+              },
+              {
+                "text": "<h6>",
+                "correct": false,
+                "reason": "不正解。<h6>は見出しタグですが、h1〜h6の中で最も小さい見出しです。最大は<h1>です。"
+              },
+              {
+                "text": "<p>",
+                "correct": false,
+                "reason": "不正解。<p>は段落タグです。見出しの最大レベルを表すタグではありません。"
+              },
+              {
+                "text": "<head>",
+                "correct": false,
+                "reason": "不正解。<head>はページのメタ情報を入れる場所で、画面上の見出しではありません。"
+              }
+            ]
+          },
+          {
+            "q": "段落（パラグラフ）を表すタグは？",
+            "exp": "<p>タグは段落を表します。<para>や<paragraph>は存在しません。 HTMLは「意味と構造」を表す言語です。タグ名だけでなく、そのタグが何を表すのかをセットで覚えると混乱しにくくなります。",
+            "choices": [
+              {
+                "text": "<p>",
+                "correct": true,
+                "reason": "正解。<p>タグは段落を表します。<para>や<paragraph>は存在しません。 HTMLは「意味と構造」を表す言語です。タグ名だけでなく、そのタグが何を表すのかをセットで覚えると混乱しにくくなります。"
+              },
+              {
+                "text": "<para>",
+                "correct": false,
+                "reason": "不正解。HTMLのこの用途では「<p>」を使います。この選択肢はタグ名や用途が問題文と合っていません。"
+              },
+              {
+                "text": "<paragraph>",
+                "correct": false,
+                "reason": "不正解。HTMLのこの用途では「<p>」を使います。この選択肢はタグ名や用途が問題文と合っていません。"
+              },
+              {
+                "text": "<text>",
+                "correct": false,
+                "reason": "不正解。HTMLのこの用途では「<p>」を使います。この選択肢はタグ名や用途が問題文と合っていません。"
+              }
+            ]
+          },
+          {
+            "q": "太字を意味するセマンティックなタグは？",
+            "exp": "<strong>は重要性を示すセマンティックタグです。<b>は視覚的な太字のみ、<bold>は存在しません。 HTMLは「意味と構造」を表す言語です。タグ名だけでなく、そのタグが何を表すのかをセットで覚えると混乱しにくくなります。",
+            "choices": [
+              {
+                "text": "<strong>",
+                "correct": true,
+                "reason": "正解。<strong>は重要性を示すセマンティックタグです。<b>は視覚的な太字のみ、<bold>は存在しません。"
+              },
+              {
+                "text": "<b>",
+                "correct": false,
+                "reason": "不正解。<b>は見た目の太字です。重要性を表すセマンティックなタグとしては<strong>を使います。"
+              },
+              {
+                "text": "<bold>",
+                "correct": false,
+                "reason": "不正解。HTMLのこの用途では「<strong>」を使います。この選択肢はタグ名や用途が問題文と合っていません。"
+              },
+              {
+                "text": "<em>",
+                "correct": false,
+                "reason": "不正解。<em>は強調を表し、通常は斜体表示になります。太字の重要性なら<strong>です。"
+              }
+            ]
+          },
+          {
+            "q": "斜体（イタリック）を意味するセマンティックタグは？",
+            "exp": "<em>は強調を示すセマンティックタグです。<i>は見た目だけの斜体です。 HTMLは「意味と構造」を表す言語です。タグ名だけでなく、そのタグが何を表すのかをセットで覚えると混乱しにくくなります。",
+            "choices": [
+              {
+                "text": "<em>",
+                "correct": true,
+                "reason": "正解。<em>は強調を示すセマンティックタグです。<i>は見た目だけの斜体です。 HTMLは「意味と構造」を表す言語です。タグ名だけでなく、そのタグが何を表すのかをセットで覚えると混乱しにくくなります。"
+              },
+              {
+                "text": "<i>",
+                "correct": false,
+                "reason": "不正解。<i>は見た目を斜体にするタグです。強調の意味を持たせるなら<em>が適切です。"
+              },
+              {
+                "text": "<italic>",
+                "correct": false,
+                "reason": "不正解。HTMLのこの用途では「<em>」を使います。この選択肢はタグ名や用途が問題文と合っていません。"
+              },
+              {
+                "text": "<slant>",
+                "correct": false,
+                "reason": "不正解。HTMLのこの用途では「<em>」を使います。この選択肢はタグ名や用途が問題文と合っていません。"
+              }
+            ]
+          },
+          {
+            "q": "改行を挿入する自己終了タグは？",
+            "exp": "<br>は改行を挿入する自己終了タグです。<br/>と書いてもかまいません。 HTMLは「意味と構造」を表す言語です。タグ名だけでなく、そのタグが何を表すのかをセットで覚えると混乱しにくくなります。",
+            "choices": [
+              {
+                "text": "<br>",
+                "correct": true,
+                "reason": "正解。<br>は改行を挿入する自己終了タグです。<br/>と書いてもかまいません。 HTMLは「意味と構造」を表す言語です。タグ名だけでなく、そのタグが何を表すのかをセットで覚えると混乱しにくくなります。"
+              },
+              {
+                "text": "<newline>",
+                "correct": false,
+                "reason": "不正解。HTMLのこの用途では「<br>」を使います。この選択肢はタグ名や用途が問題文と合っていません。"
+              },
+              {
+                "text": "<nl>",
+                "correct": false,
+                "reason": "不正解。HTMLのこの用途では「<br>」を使います。この選択肢はタグ名や用途が問題文と合っていません。"
+              },
+              {
+                "text": "<break>",
+                "correct": false,
+                "reason": "不正解。HTMLのこの用途では「<br>」を使います。この選択肢はタグ名や用途が問題文と合っていません。"
+              }
+            ]
+          },
+          {
+            "q": "水平線（区切り線）を表すタグは？",
+            "exp": "<hr>（Horizontal Rule）は水平区切り線を表します。セクション間の区切りにセマンティックな意味もあります。",
+            "choices": [
+              {
+                "text": "<hr>",
+                "correct": true,
+                "reason": "正解。<hr>（Horizontal Rule）は水平区切り線を表します。セクション間の区切りにセマンティックな意味もあります。"
+              },
+              {
+                "text": "<line>",
+                "correct": false,
+                "reason": "不正解。HTMLのこの用途では「<hr>」を使います。この選択肢はタグ名や用途が問題文と合っていません。"
+              },
+              {
+                "text": "<divider>",
+                "correct": false,
+                "reason": "不正解。HTMLのこの用途では「<hr>」を使います。この選択肢はタグ名や用途が問題文と合っていません。"
+              },
+              {
+                "text": "<border>",
+                "correct": false,
+                "reason": "不正解。HTMLのこの用途では「<hr>」を使います。この選択肢はタグ名や用途が問題文と合っていません。"
+              }
+            ]
+          }
+        ]
+      },
+      "links": {
+        "title": "リンクと画像",
+        "icon": "🔗",
+        "questions": [
+          {
+            "q": "リンクを作成する正しいコードは？",
+            "exp": "<a>タグのhref属性でリンク先URLを指定します。<link>はCSSの読み込み等に使います。 HTMLは「意味と構造」を表す言語です。タグ名だけでなく、そのタグが何を表すのかをセットで覚えると混乱しにくくなります。",
+            "choices": [
+              {
+                "text": "<a href='url'>文字</a>",
+                "correct": true,
+                "reason": "正解。<a>タグのhref属性でリンク先URLを指定します。<link>はCSSの読み込み等に使います。 HTMLは「意味と構造」を表す言語です。タグ名だけでなく、そのタグが何を表すのかをセットで覚えると混乱しにくくなります。"
+              },
+              {
+                "text": "<link href='url'>文字</link>",
+                "correct": false,
+                "reason": "不正解。<link>はCSSなど外部リソースの読み込みに使います。本文中のリンクは<a>です。"
+              },
+              {
+                "text": "<a src='url'>文字</a>",
+                "correct": false,
+                "reason": "不正解。リンク先はhref属性で指定します。srcは画像や動画などの読み込み元に使います。"
+              },
+              {
+                "text": "<href='url'>文字</href>",
+                "correct": false,
+                "reason": "不正解。HTMLのこの用途では「<a href='url'>文字</a>」を使います。この選択肢はタグ名や用途が問題文と合っていません。"
+              }
+            ]
+          },
+          {
+            "q": "画像を表示する正しいコードは？",
+            "exp": "<img>は自己終了タグで、src属性でパスを、alt属性で代替テキストを指定します。 HTMLは「意味と構造」を表す言語です。タグ名だけでなく、そのタグが何を表すのかをセットで覚えると混乱しにくくなります。",
+            "choices": [
+              {
+                "text": "<img src='pic.jpg' alt='説明'>",
+                "correct": true,
+                "reason": "正解。<img>は自己終了タグで、src属性でパスを、alt属性で代替テキストを指定します。 HTMLは「意味と構造」を表す言語です。タグ名だけでなく、そのタグが何を表すのかをセットで覚えると混乱しにくくなります。"
+              },
+              {
+                "text": "<image src='pic.jpg'>",
+                "correct": false,
+                "reason": "不正解。HTMLで画像を表示する基本タグは<img>です。srcで画像パス、altで代替テキストを指定します。"
+              },
+              {
+                "text": "<img href='pic.jpg'>",
+                "correct": false,
+                "reason": "不正解。HTMLのこの用途では「<img src='pic.jpg' alt='説明'>」を使います。この選択肢はタグ名や用途が問題文と合っていません。"
+              },
+              {
+                "text": "<picture src='pic.jpg'>",
+                "correct": false,
+                "reason": "不正解。<picture>はレスポンシブ画像などで使うコンテナです。単独でsrcを指定して画像を出す形ではありません。"
+              }
+            ]
+          },
+          {
+            "q": "新しいタブでリンクを開くには？",
+            "exp": "target='_blank' で新しいタブで開きます。セキュリティのため rel='noopener noreferrer' も合わせて指定しましょう。",
+            "choices": [
+              {
+                "text": "target='_blank'",
+                "correct": true,
+                "reason": "正解。target='_blank' で新しいタブで開きます。セキュリティのため rel='noopener noreferrer' も合わせて指定しましょう。"
+              },
+              {
+                "text": "target='_new'",
+                "correct": false,
+                "reason": "不正解。新しいタブで開く指定は target=\"_blank\" です。"
+              },
+              {
+                "text": "open='tab'",
+                "correct": false,
+                "reason": "不正解。正解の「target='_blank'」と比べると、文法・キーワード・用途のどこかが問題文と合っていません。"
+              },
+              {
+                "text": "new='true'",
+                "correct": false,
+                "reason": "不正解。正解の「target='_blank'」と比べると、文法・キーワード・用途のどこかが問題文と合っていません。"
+              }
+            ]
+          },
+          {
+            "q": "メールリンクを作る href の値は？",
+            "exp": "href='mailto:メールアドレス' でメールクライアントが起動します。 HTMLは「意味と構造」を表す言語です。タグ名だけでなく、そのタグが何を表すのかをセットで覚えると混乱しにくくなります。",
+            "choices": [
+              {
+                "text": "mailto:user@example.com",
+                "correct": true,
+                "reason": "正解。href='mailto:メールアドレス' でメールクライアントが起動します。 HTMLは「意味と構造」を表す言語です。タグ名だけでなく、そのタグが何を表すのかをセットで覚えると混乱しにくくなります。"
+              },
+              {
+                "text": "mail:user@example.com",
+                "correct": false,
+                "reason": "不正解。メールリンクでは href に mailto:メールアドレス を指定します。"
+              },
+              {
+                "text": "email:user@example.com",
+                "correct": false,
+                "reason": "不正解。メールリンクでは href に mailto:メールアドレス を指定します。"
+              },
+              {
+                "text": "send:user@example.com",
+                "correct": false,
+                "reason": "不正解。メールリンクでは href に mailto:メールアドレス を指定します。"
+              }
+            ]
+          },
+          {
+            "q": "ページ内の特定の場所へジャンプするリンクは？",
+            "exp": "#id名 で同ページ内のid属性を持つ要素にジャンプできます。アンカーリンクと呼ばれます。 HTMLは「意味と構造」を表す言語です。タグ名だけでなく、そのタグが何を表すのかをセットで覚えると混乱しにくくなります。",
+            "choices": [
+              {
+                "text": "href='#section1'",
+                "correct": true,
+                "reason": "正解。#id名 で同ページ内のid属性を持つ要素にジャンプできます。アンカーリンクと呼ばれます。 HTMLは「意味と構造」を表す言語です。タグ名だけでなく、そのタグが何を表すのかをセットで覚えると混乱しにくくなります。"
+              },
+              {
+                "text": "href='@section1'",
+                "correct": false,
+                "reason": "不正解。正解の「href='#section1'」と比べると、文法・キーワード・用途のどこかが問題文と合っていません。"
+              },
+              {
+                "text": "href='section1'",
+                "correct": false,
+                "reason": "不正解。正解の「href='#section1'」と比べると、文法・キーワード・用途のどこかが問題文と合っていません。"
+              },
+              {
+                "text": "href='>>section1'",
+                "correct": false,
+                "reason": "不正解。HTMLのこの用途では「href='#section1'」を使います。この選択肢はタグ名や用途が問題文と合っていません。"
+              }
+            ]
+          },
+          {
+            "q": "img タグの alt 属性の役割として最も正確なのは？",
+            "exp": "alt属性は画像が表示できないときや、スクリーンリーダーが読み上げるための代替テキストです。 HTMLは「意味と構造」を表す言語です。タグ名だけでなく、そのタグが何を表すのかをセットで覚えると混乱しにくくなります。",
+            "choices": [
+              {
+                "text": "画像を説明する代替テキスト",
+                "correct": true,
+                "reason": "正解。alt属性は画像が表示できないときや、スクリーンリーダーが読み上げるための代替テキストです。 HTMLは「意味と構造」を表す言語です。タグ名だけでなく、そのタグが何を表すのかをセットで覚えると混乱しにくくなります。"
+              },
+              {
+                "text": "画像のツールチップ",
+                "correct": false,
+                "reason": "不正解。正解の「画像を説明する代替テキスト」と比べると、文法・キーワード・用途のどこかが問題文と合っていません。"
+              },
+              {
+                "text": "画像のキャプション",
+                "correct": false,
+                "reason": "不正解。正解の「画像を説明する代替テキスト」と比べると、文法・キーワード・用途のどこかが問題文と合っていません。"
+              },
+              {
+                "text": "SEO用のタイトル",
+                "correct": false,
+                "reason": "不正解。正解の「画像を説明する代替テキスト」と比べると、文法・キーワード・用途のどこかが問題文と合っていません。"
+              }
+            ]
+          }
+        ]
+      },
+      "structure": {
+        "title": "ページ構造",
+        "icon": "🏗️",
+        "questions": [
+          {
+            "q": "HTMLドキュメントの文書型宣言（最初の行）は？",
+            "exp": "<!DOCTYPE html> はHTML5であることをブラウザに伝えます。大文字小文字は区別されません。 HTMLは「意味と構造」を表す言語です。タグ名だけでなく、そのタグが何を表すのかをセットで覚えると混乱しにくくなります。",
+            "choices": [
+              {
+                "text": "<!DOCTYPE html>",
+                "correct": true,
+                "reason": "正解。<!DOCTYPE html> はHTML5であることをブラウザに伝えます。大文字小文字は区別されません。"
+              },
+              {
+                "text": "<html>",
+                "correct": false,
+                "reason": "不正解。HTMLのこの用途では「<!DOCTYPE html>」を使います。この選択肢はタグ名や用途が問題文と合っていません。"
+              },
+              {
+                "text": "<doctype>",
+                "correct": false,
+                "reason": "不正解。HTMLのこの用途では「<!DOCTYPE html>」を使います。この選択肢はタグ名や用途が問題文と合っていません。"
+              },
+              {
+                "text": "<!html>",
+                "correct": false,
+                "reason": "不正解。HTMLのこの用途では「<!DOCTYPE html>」を使います。この選択肢はタグ名や用途が問題文と合っていません。"
+              }
+            ]
+          },
+          {
+            "q": "ページのメタ情報を入れる要素は？",
+            "exp": "<head>はブラウザ向けのメタ情報を入れる要素で、画面には表示されません。<header>はページの見出しエリアです。",
+            "choices": [
+              {
+                "text": "<head>",
+                "correct": true,
+                "reason": "正解。<head>はブラウザ向けのメタ情報を入れる要素で、画面には表示されません。<header>はページの見出しエリアです。"
+              },
+              {
+                "text": "<header>",
+                "correct": false,
+                "reason": "不正解。<header>はページ上部などの表示領域です。メタ情報を入れるのは<head>です。"
+              },
+              {
+                "text": "<meta>",
+                "correct": false,
+                "reason": "不正解。<meta>は<head>内で使う個別のメタ情報タグです。入れ物全体は<head>です。"
+              },
+              {
+                "text": "<top>",
+                "correct": false,
+                "reason": "不正解。HTMLのこの用途では「<head>」を使います。この選択肢はタグ名や用途が問題文と合っていません。"
+              }
+            ]
+          },
+          {
+            "q": "<nav> タグの役割は？",
+            "exp": "<nav>はサイトのナビゲーションリンクをまとめるセマンティック要素です。スクリーンリーダーが認識します。 HTMLは「意味と構造」を表す言語です。タグ名だけでなく、そのタグが何を表すのかをセットで覚えると混乱しにくくなります。",
+            "choices": [
+              {
+                "text": "ナビゲーションリンクのまとまり",
+                "correct": true,
+                "reason": "正解。<nav>はサイトのナビゲーションリンクをまとめるセマンティック要素です。スクリーンリーダーが認識します。"
+              },
+              {
+                "text": "新しいウィンドウ",
+                "correct": false,
+                "reason": "不正解。正解の「ナビゲーションリンクのまとまり」と比べると、文法・キーワード・用途のどこかが問題文と合っていません。"
+              },
+              {
+                "text": "ナンバリングリスト",
+                "correct": false,
+                "reason": "不正解。正解の「ナビゲーションリンクのまとまり」と比べると、文法・キーワード・用途のどこかが問題文と合っていません。"
+              },
+              {
+                "text": "ネストしたリンク",
+                "correct": false,
+                "reason": "不正解。正解の「ナビゲーションリンクのまとまり」と比べると、文法・キーワード・用途のどこかが問題文と合っていません。"
+              }
+            ]
+          },
+          {
+            "q": "<section> と <div> の違いとして正確なのは？",
+            "exp": "<section>は意味的なまとまりを表すセマンティック要素です。<div>は純粋なコンテナでスタイル適用に使います。",
+            "choices": [
+              {
+                "text": "sectionはセマンティック、divは汎用コンテナ",
+                "correct": true,
+                "reason": "正解。<section>は意味的なまとまりを表すセマンティック要素です。<div>は純粋なコンテナでスタイル適用に使います。"
+              },
+              {
+                "text": "sectionはCSSに使い、divは構造に使う",
+                "correct": false,
+                "reason": "不正解。正解の「sectionはセマンティック、divは汎用コンテナ」と比べると、文法・キーワード・用途のどこかが問題文と合っていません。"
+              },
+              {
+                "text": "どちらも同じ",
+                "correct": false,
+                "reason": "不正解。正解の「sectionはセマンティック、divは汎用コンテナ」と比べると、文法・キーワード・用途のどこかが問題文と合っていません。"
+              },
+              {
+                "text": "sectionはインライン要素",
+                "correct": false,
+                "reason": "不正解。正解の「sectionはセマンティック、divは汎用コンテナ」と比べると、文法・キーワード・用途のどこかが問題文と合っていません。"
+              }
+            ]
+          },
+          {
+            "q": "フッターを表すセマンティック要素は？",
+            "exp": "<footer>はページやセクションのフッターを表します。著作権情報、連絡先リンクなどを含めます。 HTMLは「意味と構造」を表す言語です。タグ名だけでなく、そのタグが何を表すのかをセットで覚えると混乱しにくくなります。",
+            "choices": [
+              {
+                "text": "<footer>",
+                "correct": true,
+                "reason": "正解。<footer>はページやセクションのフッターを表します。著作権情報、連絡先リンクなどを含めます。 HTMLは「意味と構造」を表す言語です。タグ名だけでなく、そのタグが何を表すのかをセットで覚えると混乱しにくくなります。"
+              },
+              {
+                "text": "<bottom>",
+                "correct": false,
+                "reason": "不正解。HTMLのこの用途では「<footer>」を使います。この選択肢はタグ名や用途が問題文と合っていません。"
+              },
+              {
+                "text": "<foot>",
+                "correct": false,
+                "reason": "不正解。HTMLのこの用途では「<footer>」を使います。この選択肢はタグ名や用途が問題文と合っていません。"
+              },
+              {
+                "text": "<end>",
+                "correct": false,
+                "reason": "不正解。HTMLのこの用途では「<footer>」を使います。この選択肢はタグ名や用途が問題文と合っていません。"
+              }
+            ]
+          },
+          {
+            "q": "<article> タグが最も適切な用途は？",
+            "exp": "<article>は独立したコンテンツ（ブログ記事、ニュース等）を表します。単体でも意味が通じる内容に使います。",
+            "choices": [
+              {
+                "text": "ブログ・ニュース記事",
+                "correct": true,
+                "reason": "正解。<article>は独立したコンテンツ（ブログ記事、ニュース等）を表します。単体でも意味が通じる内容に使います。"
+              },
+              {
+                "text": "広告バナー",
+                "correct": false,
+                "reason": "不正解。正解の「ブログ・ニュース記事」と比べると、文法・キーワード・用途のどこかが問題文と合っていません。"
+              },
+              {
+                "text": "ナビゲーション",
+                "correct": false,
+                "reason": "不正解。正解の「ブログ・ニュース記事」と比べると、文法・キーワード・用途のどこかが問題文と合っていません。"
+              },
+              {
+                "text": "画像ギャラリー",
+                "correct": false,
+                "reason": "不正解。正解の「ブログ・ニュース記事」と比べると、文法・キーワード・用途のどこかが問題文と合っていません。"
+              }
+            ]
+          }
+        ]
+      },
+      "forms": {
+        "title": "フォーム",
+        "icon": "📝",
+        "questions": [
+          {
+            "q": "テキスト入力欄を作る正しいコードは？",
+            "exp": "<input>は自己終了タグで、type属性で入力の種類を指定します。type='text'でテキスト入力欄になります。",
+            "choices": [
+              {
+                "text": "<input type='text'>",
+                "correct": true,
+                "reason": "正解。<input>は自己終了タグで、type属性で入力の種類を指定します。type='text'でテキスト入力欄になります。"
+              },
+              {
+                "text": "<textbox>",
+                "correct": false,
+                "reason": "不正解。HTMLのこの用途では「<input type='text'>」を使います。この選択肢はタグ名や用途が問題文と合っていません。"
+              },
+              {
+                "text": "<text-input>",
+                "correct": false,
+                "reason": "不正解。HTMLのこの用途では「<input type='text'>」を使います。この選択肢はタグ名や用途が問題文と合っていません。"
+              },
+              {
+                "text": "<field type='text'>",
+                "correct": false,
+                "reason": "不正解。HTMLのこの用途では「<input type='text'>」を使います。この選択肢はタグ名や用途が問題文と合っていません。"
+              }
+            ]
+          },
+          {
+            "q": "パスワード入力欄のtype属性は？",
+            "exp": "type='password'で入力文字がマスク（●表示）されます。type='hidden'は画面に表示しない隠しフィールドです。",
+            "choices": [
+              {
+                "text": "password",
+                "correct": true,
+                "reason": "正解。type='password'で入力文字がマスク（●表示）されます。type='hidden'は画面に表示しない隠しフィールドです。"
+              },
+              {
+                "text": "secret",
+                "correct": false,
+                "reason": "不正解。パスワード入力欄は type='password' です。入力内容が伏せ字になります。"
+              },
+              {
+                "text": "hidden",
+                "correct": false,
+                "reason": "不正解。パスワード入力欄は type='password' です。入力内容が伏せ字になります。"
+              },
+              {
+                "text": "private",
+                "correct": false,
+                "reason": "不正解。パスワード入力欄は type='password' です。入力内容が伏せ字になります。"
+              }
+            ]
+          },
+          {
+            "q": "送信ボタンを作るコードは？",
+            "exp": "<button type='submit'>でフォームを送信します。<input type='submit'>も使えますがコンテンツを自由に設定できません。",
+            "choices": [
+              {
+                "text": "<button type='submit'>送信</button>",
+                "correct": true,
+                "reason": "正解。<button type='submit'>でフォームを送信します。<input type='submit'>も使えますがコンテンツを自由に設定できません。"
+              },
+              {
+                "text": "<submit>送信</submit>",
+                "correct": false,
+                "reason": "不正解。HTMLのこの用途では「<button type='submit'>送信</button>」を使います。この選択肢はタグ名や用途が問題文と合っていません。"
+              },
+              {
+                "text": "<input type='button'>送信</input>",
+                "correct": false,
+                "reason": "不正解。HTMLのこの用途では「<button type='submit'>送信</button>」を使います。この選択肢はタグ名や用途が問題文と合っていません。"
+              },
+              {
+                "text": "<send>送信</send>",
+                "correct": false,
+                "reason": "不正解。HTMLのこの用途では「<button type='submit'>送信</button>」を使います。この選択肢はタグ名や用途が問題文と合っていません。"
+              }
+            ]
+          },
+          {
+            "q": "複数行のテキスト入力に使う要素は？",
+            "exp": "<textarea>は複数行テキスト入力に使います。rows属性とcols属性で表示サイズを指定できます。 HTMLは「意味と構造」を表す言語です。タグ名だけでなく、そのタグが何を表すのかをセットで覚えると混乱しにくくなります。",
+            "choices": [
+              {
+                "text": "<textarea>",
+                "correct": true,
+                "reason": "正解。<textarea>は複数行テキスト入力に使います。rows属性とcols属性で表示サイズを指定できます。"
+              },
+              {
+                "text": "<input type='multiline'>",
+                "correct": false,
+                "reason": "不正解。HTMLのこの用途では「<textarea>」を使います。この選択肢はタグ名や用途が問題文と合っていません。"
+              },
+              {
+                "text": "<input type='textarea'>",
+                "correct": false,
+                "reason": "不正解。HTMLのこの用途では「<textarea>」を使います。この選択肢はタグ名や用途が問題文と合っていません。"
+              },
+              {
+                "text": "<text>",
+                "correct": false,
+                "reason": "不正解。HTMLのこの用途では「<textarea>」を使います。この選択肢はタグ名や用途が問題文と合っていません。"
+              }
+            ]
+          },
+          {
+            "q": "ラジオボタンを作るtype属性は？",
+            "exp": "<input type='radio'>で作ります。同じname属性をグループ内で共有することで一つだけ選べるようになります。",
+            "choices": [
+              {
+                "text": "radio",
+                "correct": true,
+                "reason": "正解。<input type='radio'>で作ります。同じname属性をグループ内で共有することで一つだけ選べるようになります。"
+              },
+              {
+                "text": "circle",
+                "correct": false,
+                "reason": "不正解。正解の「radio」と比べると、文法・キーワード・用途のどこかが問題文と合っていません。"
+              },
+              {
+                "text": "single",
+                "correct": false,
+                "reason": "不正解。正解の「radio」と比べると、文法・キーワード・用途のどこかが問題文と合っていません。"
+              },
+              {
+                "text": "option",
+                "correct": false,
+                "reason": "不正解。正解の「radio」と比べると、文法・キーワード・用途のどこかが問題文と合っていません。"
+              }
+            ]
+          },
+          {
+            "q": "<label>タグを使う主な目的は？",
+            "exp": "for属性にinputのidを指定すると、ラベルをクリックしても入力欄にフォーカスが当たります。アクセシビリティに重要です。",
+            "choices": [
+              {
+                "text": "入力欄と説明テキストを関連付ける",
+                "correct": true,
+                "reason": "正解。for属性にinputのidを指定すると、ラベルをクリックしても入力欄にフォーカスが当たります。アクセシビリティに重要です。"
+              },
+              {
+                "text": "入力を装飾する",
+                "correct": false,
+                "reason": "不正解。正解の「入力欄と説明テキストを関連付ける」と比べると、文法・キーワード・用途のどこかが問題文と合っていません。"
+              },
+              {
+                "text": "入力値にラベルを付ける",
+                "correct": false,
+                "reason": "不正解。正解の「入力欄と説明テキストを関連付ける」と比べると、文法・キーワード・用途のどこかが問題文と合っていません。"
+              },
+              {
+                "text": "バリデーションを表示する",
+                "correct": false,
+                "reason": "不正解。正解の「入力欄と説明テキストを関連付ける」と比べると、文法・キーワード・用途のどこかが問題文と合っていません。"
+              }
+            ]
+          }
+        ]
+      }
+    }
+  },
+  "css": {
+    "title": "CSS",
+    "emoji": "🎨",
+    "desc": "Webページのデザイン・見た目を整えるスタイルシート",
+    "categories": {
+      "selectors": {
+        "title": "セレクターの基本",
+        "icon": "🎯",
+        "questions": [
+          {
+            "q": "idが'main'の要素を選択するCSSセレクターは？",
+            "exp": "#（ハッシュ）はIDセレクターです。.（ドット）はクラスセレクター、タグ名はタイプセレクターです。 CSSは「どの要素に、どんな見た目を指定するか」を書く言語です。セレクター、プロパティ、値の役割を分けて考えると理解しやすくなります。",
+            "choices": [
+              {
+                "text": "#main",
+                "correct": true,
+                "reason": "正解。#（ハッシュ）はIDセレクターです。.（ドット）はクラスセレクター、タグ名はタイプセレクターです。 CSSは「どの要素に、どんな見た目を指定するか」を書く言語です。セレクター、プロパティ、値の役割を分けて考えると理解しやすくなります。"
+              },
+              {
+                "text": ".main",
+                "correct": false,
+                "reason": "不正解。.main はclass='main'を選びます。id='main'を選ぶには#mainです。"
+              },
+              {
+                "text": "main",
+                "correct": false,
+                "reason": "不正解。CSSではこの目的に「#main」を使います。この選択肢はプロパティ名や値が正しくありません。"
+              },
+              {
+                "text": "*main",
+                "correct": false,
+                "reason": "不正解。CSSではこの目的に「#main」を使います。この選択肢はプロパティ名や値が正しくありません。"
+              }
+            ]
+          },
+          {
+            "q": "クラスが'btn'の要素を選択するセレクターは？",
+            "exp": ".（ドット）はクラスセレクターです。同じクラスを複数の要素に使いまわせます。 CSSは「どの要素に、どんな見た目を指定するか」を書く言語です。セレクター、プロパティ、値の役割を分けて考えると理解しやすくなります。",
+            "choices": [
+              {
+                "text": ".btn",
+                "correct": true,
+                "reason": "正解。.（ドット）はクラスセレクターです。同じクラスを複数の要素に使いまわせます。 CSSは「どの要素に、どんな見た目を指定するか」を書く言語です。セレクター、プロパティ、値の役割を分けて考えると理解しやすくなります。"
+              },
+              {
+                "text": "#btn",
+                "correct": false,
+                "reason": "不正解。#btn はid='btn'を選びます。class='btn'を選ぶには.btnです。"
+              },
+              {
+                "text": "btn",
+                "correct": false,
+                "reason": "不正解。CSSではこの目的に「.btn」を使います。この選択肢はプロパティ名や値が正しくありません。"
+              },
+              {
+                "text": "[btn]",
+                "correct": false,
+                "reason": "不正解。CSSではこの目的に「.btn」を使います。この選択肢はプロパティ名や値が正しくありません。"
+              }
+            ]
+          },
+          {
+            "q": "子孫セレクター（divの中のすべてのp）の書き方は？",
+            "exp": "スペース区切りが子孫セレクターです。>は直接の子のみ、+は隣接兄弟要素、,は複数選択です。 CSSは「どの要素に、どんな見た目を指定するか」を書く言語です。セレクター、プロパティ、値の役割を分けて考えると理解しやすくなります。",
+            "choices": [
+              {
+                "text": "div p",
+                "correct": true,
+                "reason": "正解。スペース区切りが子孫セレクターです。>は直接の子のみ、+は隣接兄弟要素、,は複数選択です。 CSSは「どの要素に、どんな見た目を指定するか」を書く言語です。セレクター、プロパティ、値の役割を分けて考えると理解しやすくなります。"
+              },
+              {
+                "text": "div > p",
+                "correct": false,
+                "reason": "不正解。> は直接の子だけを選ぶ子セレクターです。中のすべてのpを選ぶ子孫セレクターは空白で区切ります。"
+              },
+              {
+                "text": "div + p",
+                "correct": false,
+                "reason": "不正解。+ は隣接兄弟セレクターです。divの中のpを選ぶ意味ではありません。"
+              },
+              {
+                "text": "div, p",
+                "correct": false,
+                "reason": "不正解。, は複数セレクターをまとめる書き方です。divの中のpという意味にはなりません。"
+              }
+            ]
+          },
+          {
+            "q": "マウスホバー時にスタイルを適用する疑似クラスは？",
+            "exp": ":hoverでホバー時、:activeでクリック中、:focusでフォーカス時のスタイルを指定できます。 CSSは「どの要素に、どんな見た目を指定するか」を書く言語です。セレクター、プロパティ、値の役割を分けて考えると理解しやすくなります。",
+            "choices": [
+              {
+                "text": ":hover",
+                "correct": true,
+                "reason": "正解。:hoverでホバー時、:activeでクリック中、:focusでフォーカス時のスタイルを指定できます。"
+              },
+              {
+                "text": ":active",
+                "correct": false,
+                "reason": "不正解。CSSではこの目的に「:hover」を使います。この選択肢はプロパティ名や値が正しくありません。"
+              },
+              {
+                "text": ":focus",
+                "correct": false,
+                "reason": "不正解。CSSではこの目的に「:hover」を使います。この選択肢はプロパティ名や値が正しくありません。"
+              },
+              {
+                "text": "::hover",
+                "correct": false,
+                "reason": "不正解。CSSではこの目的に「:hover」を使います。この選択肢はプロパティ名や値が正しくありません。"
+              }
+            ]
+          },
+          {
+            "q": "要素の最初の子だけを選択する疑似クラスは？",
+            "exp": ":first-childは親要素の最初の子を選択します。:last-childは最後の子、:nth-child(n)はn番目を選択します。",
+            "choices": [
+              {
+                "text": ":first-child",
+                "correct": true,
+                "reason": "正解。:first-childは親要素の最初の子を選択します。:last-childは最後の子、:nth-child(n)はn番目を選択します。"
+              },
+              {
+                "text": ":first",
+                "correct": false,
+                "reason": "不正解。CSSではこの目的に「:first-child」を使います。この選択肢はプロパティ名や値が正しくありません。"
+              },
+              {
+                "text": ":nth-child(0)",
+                "correct": false,
+                "reason": "不正解。CSSではこの目的に「:first-child」を使います。この選択肢はプロパティ名や値が正しくありません。"
+              },
+              {
+                "text": "::first",
+                "correct": false,
+                "reason": "不正解。CSSではこの目的に「:first-child」を使います。この選択肢はプロパティ名や値が正しくありません。"
+              }
+            ]
+          },
+          {
+            "q": "全要素を選択するユニバーサルセレクターは？",
+            "exp": "*(アスタリスク)はすべての要素を選択します。CSSリセットで * { box-sizing: border-box; } のように使われます。",
+            "choices": [
+              {
+                "text": "*",
+                "correct": true,
+                "reason": "正解。*(アスタリスク)はすべての要素を選択します。CSSリセットで * { box-sizing: border-box; } のように使われます。"
+              },
+              {
+                "text": "all",
+                "correct": false,
+                "reason": "不正解。CSSではこの目的に「*」を使います。この選択肢はプロパティ名や値が正しくありません。"
+              },
+              {
+                "text": "@all",
+                "correct": false,
+                "reason": "不正解。CSSではこの目的に「*」を使います。この選択肢はプロパティ名や値が正しくありません。"
+              },
+              {
+                "text": "#*",
+                "correct": false,
+                "reason": "不正解。CSSではこの目的に「*」を使います。この選択肢はプロパティ名や値が正しくありません。"
+              }
+            ]
+          }
+        ]
+      },
+      "boxmodel": {
+        "title": "ボックスモデル",
+        "icon": "📦",
+        "questions": [
+          {
+            "q": "要素の内側の余白を指定するプロパティは？",
+            "exp": "paddingは内側の余白、marginは外側の余白です。FlexboxのgapはFlexアイテム間の余白に使います。",
+            "choices": [
+              {
+                "text": "padding",
+                "correct": true,
+                "reason": "正解。paddingは内側の余白、marginは外側の余白です。FlexboxのgapはFlexアイテム間の余白に使います。"
+              },
+              {
+                "text": "margin",
+                "correct": false,
+                "reason": "不正解。marginは外側の余白です。要素の内側の余白はpaddingです。"
+              },
+              {
+                "text": "border-spacing",
+                "correct": false,
+                "reason": "不正解。CSSではこの目的に「padding」を使います。この選択肢はプロパティ名や値が正しくありません。"
+              },
+              {
+                "text": "gap",
+                "correct": false,
+                "reason": "不正解。CSSではこの目的に「padding」を使います。この選択肢はプロパティ名や値が正しくありません。"
+              }
+            ]
+          },
+          {
+            "q": "widthにpaddingやborderを含めるbox-sizingの値は？",
+            "exp": "border-boxにするとwidthが指定値のままでpaddingとborderが内側に収まります。CSSリセットで多用されます。",
+            "choices": [
+              {
+                "text": "border-box",
+                "correct": true,
+                "reason": "正解。border-boxにするとwidthが指定値のままでpaddingとborderが内側に収まります。CSSリセットで多用されます。"
+              },
+              {
+                "text": "content-box",
+                "correct": false,
+                "reason": "不正解。widthにpaddingとborderを含めたい場合は box-sizing: border-box を使います。"
+              },
+              {
+                "text": "padding-box",
+                "correct": false,
+                "reason": "不正解。widthにpaddingとborderを含めたい場合は box-sizing: border-box を使います。"
+              },
+              {
+                "text": "full-box",
+                "correct": false,
+                "reason": "不正解。widthにpaddingとborderを含めたい場合は box-sizing: border-box を使います。"
+              }
+            ]
+          },
+          {
+            "q": "margin: 10px 20px の意味は？",
+            "exp": "値が2つの場合：1つ目が上下、2つ目が左右です。4つ指定すると上→右→下→左の順です。 CSSは「どの要素に、どんな見た目を指定するか」を書く言語です。セレクター、プロパティ、値の役割を分けて考えると理解しやすくなります。",
+            "choices": [
+              {
+                "text": "上下10px 左右20px",
+                "correct": true,
+                "reason": "正解。値が2つの場合：1つ目が上下、2つ目が左右です。4つ指定すると上→右→下→左の順です。 CSSは「どの要素に、どんな見た目を指定するか」を書く言語です。セレクター、プロパティ、値の役割を分けて考えると理解しやすくなります。"
+              },
+              {
+                "text": "上20px 右10px 下20px 左10px",
+                "correct": false,
+                "reason": "不正解。CSSではこの目的に「上下10px 左右20px」を使います。この選択肢はプロパティ名や値が正しくありません。"
+              },
+              {
+                "text": "全方向15px",
+                "correct": false,
+                "reason": "不正解。CSSではこの目的に「上下10px 左右20px」を使います。この選択肢はプロパティ名や値が正しくありません。"
+              },
+              {
+                "text": "上下20px 左右10px",
+                "correct": false,
+                "reason": "不正解。CSSではこの目的に「上下10px 左右20px」を使います。この選択肢はプロパティ名や値が正しくありません。"
+              }
+            ]
+          },
+          {
+            "q": "要素を見えなくするが場所は確保するプロパティは？",
+            "exp": "visibility:hiddenは見えなくなりますが領域は確保されます。display:noneは完全に消えてレイアウトから外れます。",
+            "choices": [
+              {
+                "text": "visibility: hidden",
+                "correct": true,
+                "reason": "正解。visibility:hiddenは見えなくなりますが領域は確保されます。display:noneは完全に消えてレイアウトから外れます。"
+              },
+              {
+                "text": "display: none",
+                "correct": false,
+                "reason": "不正解。display:noneは要素をレイアウトから外します。場所を残したいならvisibility:hiddenです。"
+              },
+              {
+                "text": "opacity: 0",
+                "correct": false,
+                "reason": "惜しいですが、この問題の代表解ではありません。opacity:0も透明で場所は残りますが、要素はクリック可能な場合があります。visibility:hiddenは非表示状態としてより直接的です。"
+              },
+              {
+                "text": "hidden: true",
+                "correct": false,
+                "reason": "不正解。表示を隠しつつ場所を残す代表的な指定は visibility:hidden です。"
+              }
+            ]
+          },
+          {
+            "q": "要素の角を丸くするプロパティは？",
+            "exp": "border-radiusで角を丸くできます。50%にすると円形になります。 CSSは「どの要素に、どんな見た目を指定するか」を書く言語です。セレクター、プロパティ、値の役割を分けて考えると理解しやすくなります。",
+            "choices": [
+              {
+                "text": "border-radius",
+                "correct": true,
+                "reason": "正解。border-radiusで角を丸くできます。50%にすると円形になります。 CSSは「どの要素に、どんな見た目を指定するか」を書く言語です。セレクター、プロパティ、値の役割を分けて考えると理解しやすくなります。"
+              },
+              {
+                "text": "corner-radius",
+                "correct": false,
+                "reason": "不正解。CSSではこの目的に「border-radius」を使います。この選択肢はプロパティ名や値が正しくありません。"
+              },
+              {
+                "text": "rounded",
+                "correct": false,
+                "reason": "不正解。CSSではこの目的に「border-radius」を使います。この選択肢はプロパティ名や値が正しくありません。"
+              },
+              {
+                "text": "border-curve",
+                "correct": false,
+                "reason": "不正解。CSSではこの目的に「border-radius」を使います。この選択肢はプロパティ名や値が正しくありません。"
+              }
+            ]
+          },
+          {
+            "q": "外側のボーダーを1px実線黒にするには？",
+            "exp": "border: 幅 スタイル 色 の順で指定します。solidは実線、dashedは破線、dottedは点線です。",
+            "choices": [
+              {
+                "text": "border: 1px solid black",
+                "correct": true,
+                "reason": "正解。border: 幅 スタイル 色 の順で指定します。solidは実線、dashedは破線、dottedは点線です。"
+              },
+              {
+                "text": "border: 1px line black",
+                "correct": false,
+                "reason": "不正解。CSSではこの目的に「border: 1px solid black」を使います。この選択肢はプロパティ名や値が正しくありません。"
+              },
+              {
+                "text": "outline: 1px solid",
+                "correct": false,
+                "reason": "不正解。CSSではこの目的に「border: 1px solid black」を使います。この選択肢はプロパティ名や値が正しくありません。"
+              },
+              {
+                "text": "border-style: fill",
+                "correct": false,
+                "reason": "不正解。CSSではこの目的に「border: 1px solid black」を使います。この選択肢はプロパティ名や値が正しくありません。"
+              }
+            ]
+          }
+        ]
+      },
+      "flexbox": {
+        "title": "Flexboxレイアウト",
+        "icon": "↔️",
+        "questions": [
+          {
+            "q": "Flexboxを有効にするプロパティと値は？",
+            "exp": "display:flex をコンテナに指定するとFlexboxが有効になります。子要素が自動的にフレックスアイテムになります。",
+            "choices": [
+              {
+                "text": "display: flex",
+                "correct": true,
+                "reason": "正解。display:flex をコンテナに指定するとFlexboxが有効になります。子要素が自動的にフレックスアイテムになります。"
+              },
+              {
+                "text": "flex: true",
+                "correct": false,
+                "reason": "不正解。Flexboxでは「display: flex」がこの目的に対応します。この選択肢はCSSの正しいプロパティ名・値ではないか、役割が違います。"
+              },
+              {
+                "text": "layout: flex",
+                "correct": false,
+                "reason": "不正解。Flexboxでは「display: flex」がこの目的に対応します。この選択肢はCSSの正しいプロパティ名・値ではないか、役割が違います。"
+              },
+              {
+                "text": "display: flexbox",
+                "correct": false,
+                "reason": "不正解。Flexboxでは「display: flex」がこの目的に対応します。この選択肢はCSSの正しいプロパティ名・値ではないか、役割が違います。"
+              }
+            ]
+          },
+          {
+            "q": "フレックスアイテムを縦方向に並べるには？",
+            "exp": "flex-direction:column で主軸が縦方向になります。デフォルトのrowは横方向です。 CSSは「どの要素に、どんな見た目を指定するか」を書く言語です。セレクター、プロパティ、値の役割を分けて考えると理解しやすくなります。",
+            "choices": [
+              {
+                "text": "flex-direction: column",
+                "correct": true,
+                "reason": "正解。flex-direction:column で主軸が縦方向になります。デフォルトのrowは横方向です。 CSSは「どの要素に、どんな見た目を指定するか」を書く言語です。セレクター、プロパティ、値の役割を分けて考えると理解しやすくなります。"
+              },
+              {
+                "text": "flex-direction: vertical",
+                "correct": false,
+                "reason": "不正解。Flexboxの主軸を縦にするには flex-direction: column を使います。"
+              },
+              {
+                "text": "align-items: column",
+                "correct": false,
+                "reason": "不正解。Flexboxの主軸を縦にするには flex-direction: column を使います。"
+              },
+              {
+                "text": "flex-flow: down",
+                "correct": false,
+                "reason": "不正解。Flexboxの主軸を縦にするには flex-direction: column を使います。"
+              }
+            ]
+          },
+          {
+            "q": "アイテムを完全中央に配置するには？",
+            "exp": "justify-contentは主軸、align-itemsは交差軸の配置を制御します。両方centerで完全中央揃えになります。",
+            "choices": [
+              {
+                "text": "justify-content:center と align-items:center",
+                "correct": true,
+                "reason": "正解。justify-contentは主軸、align-itemsは交差軸の配置を制御します。両方centerで完全中央揃えになります。"
+              },
+              {
+                "text": "text-align:center と vertical-align:middle",
+                "correct": false,
+                "reason": "不正解。CSSではこの目的に「justify-content:center と align-items:center」を使います。この選択肢はプロパティ名や値が正しくありません。"
+              },
+              {
+                "text": "margin:auto と padding:auto",
+                "correct": false,
+                "reason": "不正解。CSSではこの目的に「justify-content:center と align-items:center」を使います。この選択肢はプロパティ名や値が正しくありません。"
+              },
+              {
+                "text": "position:center",
+                "correct": false,
+                "reason": "不正解。CSSではこの目的に「justify-content:center と align-items:center」を使います。この選択肢はプロパティ名や値が正しくありません。"
+              }
+            ]
+          },
+          {
+            "q": "フレックスアイテムが折り返しを許可するには？",
+            "exp": "flex-wrap:wrap でアイテムが折り返します。nowrap（デフォルト）は折り返しなし、wrap-reverseは逆順で折り返します。",
+            "choices": [
+              {
+                "text": "flex-wrap: wrap",
+                "correct": true,
+                "reason": "正解。flex-wrap:wrap でアイテムが折り返します。nowrap（デフォルト）は折り返しなし、wrap-reverseは逆順で折り返します。"
+              },
+              {
+                "text": "flex-wrap: true",
+                "correct": false,
+                "reason": "不正解。Flexアイテムの折り返しを許可する指定は flex-wrap: wrap です。"
+              },
+              {
+                "text": "overflow: wrap",
+                "correct": false,
+                "reason": "不正解。Flexアイテムの折り返しを許可する指定は flex-wrap: wrap です。"
+              },
+              {
+                "text": "flex: wrap",
+                "correct": false,
+                "reason": "不正解。Flexアイテムの折り返しを許可する指定は flex-wrap: wrap です。"
+              }
+            ]
+          },
+          {
+            "q": "flex: 1 の意味として正しいのは？",
+            "exp": "flex:1 は flex-grow:1 の省略形で、残りのスペースをアイテム間で均等に分配します。 CSSは「どの要素に、どんな見た目を指定するか」を書く言語です。セレクター、プロパティ、値の役割を分けて考えると理解しやすくなります。",
+            "choices": [
+              {
+                "text": "残りスペースを均等に占める",
+                "correct": true,
+                "reason": "正解。flex:1 は flex-grow:1 の省略形で、残りのスペースをアイテム間で均等に分配します。 CSSは「どの要素に、どんな見た目を指定するか」を書く言語です。セレクター、プロパティ、値の役割を分けて考えると理解しやすくなります。"
+              },
+              {
+                "text": "固定幅1pxにする",
+                "correct": false,
+                "reason": "不正解。Flexboxでは「残りスペースを均等に占める」がこの目的に対応します。この選択肢はCSSの正しいプロパティ名・値ではないか、役割が違います。"
+              },
+              {
+                "text": "1列に配置する",
+                "correct": false,
+                "reason": "不正解。Flexboxでは「残りスペースを均等に占める」がこの目的に対応します。この選択肢はCSSの正しいプロパティ名・値ではないか、役割が違います。"
+              },
+              {
+                "text": "opacity1にする",
+                "correct": false,
+                "reason": "不正解。Flexboxでは「残りスペースを均等に占める」がこの目的に対応します。この選択肢はCSSの正しいプロパティ名・値ではないか、役割が違います。"
+              }
+            ]
+          },
+          {
+            "q": "両端に余白を置かず、アイテム同士の間に余白を入れる justify-content の値は？",
+            "exp": "space-betweenは最初と最後のアイテムを両端に寄せ、アイテム同士の間だけを均等に空けます。space-aroundやspace-evenlyとは端の余白の扱いが違います。",
+            "choices": [
+              {
+                "text": "space-between",
+                "correct": true,
+                "reason": "正解。space-betweenは最初と最後のアイテムを両端に寄せ、アイテム同士の間だけを均等に空けます。space-aroundやspace-evenlyとは端の余白の扱いが違います。"
+              },
+              {
+                "text": "space-around",
+                "correct": false,
+                "reason": "不正解。space-aroundは各アイテムの左右に余白を作るため、端にも半分の余白ができます。"
+              },
+              {
+                "text": "space-evenly",
+                "correct": false,
+                "reason": "不正解。space-evenlyは端の余白も含めてすべて均等にします。両端に余白を置かない指定ではありません。"
+              },
+              {
+                "text": "justify",
+                "correct": false,
+                "reason": "不正解。CSSではこの目的に「space-between」を使います。この選択肢はプロパティ名や値が正しくありません。"
+              }
+            ]
+          },
+          {
+            "q": "スマホでは縦並び、PCでは横並びにする時によく使うCSSは？",
+            "exp": "@mediaで画面幅ごとのCSSを切り替え、flex-directionで横並び・縦並びを変えます。レスポンシブ対応の基本です。",
+            "choices": [
+              {
+                "text": "@media と flex-direction",
+                "correct": true,
+                "reason": "正解。@mediaで画面幅ごとのCSSを切り替え、flex-directionで横並び・縦並びを変えます。レスポンシブ対応の基本です。"
+              },
+              {
+                "text": "onclick と if",
+                "correct": false,
+                "reason": "不正解。画面幅でCSSを切り替えるには@media、並び方向の変更にはflex-directionを使います。"
+              },
+              {
+                "text": "SELECT と JOIN",
+                "correct": false,
+                "reason": "不正解。画面幅でCSSを切り替えるには@media、並び方向の変更にはflex-directionを使います。"
+              },
+              {
+                "text": "print と input",
+                "correct": false,
+                "reason": "不正解。画面幅でCSSを切り替えるには@media、並び方向の変更にはflex-directionを使います。"
+              }
+            ]
+          }
+        ]
+      },
+      "typography": {
+        "title": "テキストとフォント",
+        "icon": "✏️",
+        "questions": [
+          {
+            "q": "フォントサイズを16pxにするプロパティは？",
+            "exp": "font-sizeでフォントサイズを指定します。px以外にem, rem, vwなども使えます。 CSSは「どの要素に、どんな見た目を指定するか」を書く言語です。セレクター、プロパティ、値の役割を分けて考えると理解しやすくなります。",
+            "choices": [
+              {
+                "text": "font-size: 16px",
+                "correct": true,
+                "reason": "正解。font-sizeでフォントサイズを指定します。px以外にem, rem, vwなども使えます。 CSSは「どの要素に、どんな見た目を指定するか」を書く言語です。セレクター、プロパティ、値の役割を分けて考えると理解しやすくなります。"
+              },
+              {
+                "text": "text-size: 16px",
+                "correct": false,
+                "reason": "不正解。CSSではこの目的に「font-size: 16px」を使います。この選択肢はプロパティ名や値が正しくありません。"
+              },
+              {
+                "text": "font: 16px",
+                "correct": false,
+                "reason": "不正解。CSSではこの目的に「font-size: 16px」を使います。この選択肢はプロパティ名や値が正しくありません。"
+              },
+              {
+                "text": "size: 16px",
+                "correct": false,
+                "reason": "不正解。CSSではこの目的に「font-size: 16px」を使います。この選択肢はプロパティ名や値が正しくありません。"
+              }
+            ]
+          },
+          {
+            "q": "文字を太字にするプロパティと値は？",
+            "exp": "font-weightでフォントの太さを指定します。bold(700)、normal(400)、数値(100〜900)が使えます。",
+            "choices": [
+              {
+                "text": "font-weight: bold",
+                "correct": true,
+                "reason": "正解。font-weightでフォントの太さを指定します。bold(700)、normal(400)、数値(100〜900)が使えます。"
+              },
+              {
+                "text": "text-weight: bold",
+                "correct": false,
+                "reason": "不正解。CSSではこの目的に「font-weight: bold」を使います。この選択肢はプロパティ名や値が正しくありません。"
+              },
+              {
+                "text": "font-bold: true",
+                "correct": false,
+                "reason": "不正解。CSSではこの目的に「font-weight: bold」を使います。この選択肢はプロパティ名や値が正しくありません。"
+              },
+              {
+                "text": "weight: 700",
+                "correct": false,
+                "reason": "不正解。CSSではこの目的に「font-weight: bold」を使います。この選択肢はプロパティ名や値が正しくありません。"
+              }
+            ]
+          },
+          {
+            "q": "文字の色を赤にする正しい書き方は？",
+            "exp": "colorプロパティでテキストの色を指定します。red, #ff0000, rgb(255,0,0)など様々な書き方があります。",
+            "choices": [
+              {
+                "text": "color: red",
+                "correct": true,
+                "reason": "正解。colorプロパティでテキストの色を指定します。red, #ff0000, rgb(255,0,0)など様々な書き方があります。"
+              },
+              {
+                "text": "text-color: red",
+                "correct": false,
+                "reason": "不正解。CSSではこの目的に「color: red」を使います。この選択肢はプロパティ名や値が正しくありません。"
+              },
+              {
+                "text": "font-color: red",
+                "correct": false,
+                "reason": "不正解。CSSではこの目的に「color: red」を使います。この選択肢はプロパティ名や値が正しくありません。"
+              },
+              {
+                "text": "foreground: red",
+                "correct": false,
+                "reason": "不正解。CSSではこの目的に「color: red」を使います。この選択肢はプロパティ名や値が正しくありません。"
+              }
+            ]
+          },
+          {
+            "q": "テキストを中央揃えにするには？",
+            "exp": "text-alignはテキストの水平方向の揃え方を指定します。left, center, right, justifyが使えます。",
+            "choices": [
+              {
+                "text": "text-align: center",
+                "correct": true,
+                "reason": "正解。text-alignはテキストの水平方向の揃え方を指定します。left, center, right, justifyが使えます。"
+              },
+              {
+                "text": "align: center",
+                "correct": false,
+                "reason": "不正解。CSSではこの目的に「text-align: center」を使います。この選択肢はプロパティ名や値が正しくありません。"
+              },
+              {
+                "text": "justify: center",
+                "correct": false,
+                "reason": "不正解。CSSではこの目的に「text-align: center」を使います。この選択肢はプロパティ名や値が正しくありません。"
+              },
+              {
+                "text": "text-position: center",
+                "correct": false,
+                "reason": "不正解。CSSではこの目的に「text-align: center」を使います。この選択肢はプロパティ名や値が正しくありません。"
+              }
+            ]
+          },
+          {
+            "q": "行間（行の高さ）を1.5倍にするには？",
+            "exp": "line-heightで行間を指定します。単位なしの数値（1.5）はフォントサイズの倍率で指定する推奨の書き方です。",
+            "choices": [
+              {
+                "text": "line-height: 1.5",
+                "correct": true,
+                "reason": "正解。line-heightで行間を指定します。単位なしの数値（1.5）はフォントサイズの倍率で指定する推奨の書き方です。"
+              },
+              {
+                "text": "letter-spacing: 1.5",
+                "correct": false,
+                "reason": "不正解。CSSではこの目的に「line-height: 1.5」を使います。この選択肢はプロパティ名や値が正しくありません。"
+              },
+              {
+                "text": "row-height: 1.5",
+                "correct": false,
+                "reason": "不正解。CSSではこの目的に「line-height: 1.5」を使います。この選択肢はプロパティ名や値が正しくありません。"
+              },
+              {
+                "text": "line-spacing: 1.5",
+                "correct": false,
+                "reason": "不正解。CSSではこの目的に「line-height: 1.5」を使います。この選択肢はプロパティ名や値が正しくありません。"
+              }
+            ]
+          },
+          {
+            "q": "テキストの下線を消すには？",
+            "exp": "text-decorationでテキストの装飾を指定します。none, underline, overline, line-throughが使えます。",
+            "choices": [
+              {
+                "text": "text-decoration: none",
+                "correct": true,
+                "reason": "正解。text-decorationでテキストの装飾を指定します。none, underline, overline, line-throughが使えます。"
+              },
+              {
+                "text": "underline: false",
+                "correct": false,
+                "reason": "不正解。リンクなどの下線を消すには text-decoration:none を使います。"
+              },
+              {
+                "text": "text-underline: none",
+                "correct": false,
+                "reason": "不正解。リンクなどの下線を消すには text-decoration:none を使います。"
+              },
+              {
+                "text": "decoration: remove",
+                "correct": false,
+                "reason": "不正解。リンクなどの下線を消すには text-decoration:none を使います。"
+              }
+            ]
+          }
+        ]
+      }
+    }
+  },
+  "javascript": {
+    "title": "JavaScript",
+    "emoji": "⚡",
+    "desc": "Webをインタラクティブにするプログラミング言語",
+    "categories": {
+      "variables": {
+        "title": "変数と宣言",
+        "icon": "📌",
+        "questions": [
+          {
+            "q": "再代入できない変数を宣言するキーワードは？",
+            "exp": "constは定数（再代入不可）の宣言に使います。letは再代入可能なブロックスコープ変数、varは旧来の書き方です。",
+            "choices": [
+              {
+                "text": "const",
+                "correct": true,
+                "reason": "正解。constは定数（再代入不可）の宣言に使います。letは再代入可能なブロックスコープ変数、varは旧来の書き方です。"
+              },
+              {
+                "text": "let",
+                "correct": false,
+                "reason": "不正解。letは再代入できます。再代入させたくない場合はconstです。"
+              },
+              {
+                "text": "var",
+                "correct": false,
+                "reason": "不正解。varは古い変数宣言で再代入可能です。今はlet/constを使い分けるのが一般的です。"
+              },
+              {
+                "text": "fixed",
+                "correct": false,
+                "reason": "不正解。JavaScriptではこの目的に「const」を使います。選択肢は文法・戻り値・用途のどこかが違います。"
+              }
+            ]
+          },
+          {
+            "q": "次のコードの出力は？\nlet x = 5;\nlet y = '5';\nconsole.log(x === y);",
+            "exp": "===は厳密等価演算子で型も比較します。数値5と文字列'5'は型が違うのでfalseになります。 JavaScriptは画面の操作やデータ処理を担当する言語です。似た名前の機能でも、戻り値や変更対象が違うことがあります。",
+            "choices": [
+              {
+                "text": "false",
+                "correct": true,
+                "reason": "正解。===は厳密等価演算子で型も比較します。数値5と文字列'5'は型が違うのでfalseになります。 JavaScriptは画面の操作やデータ処理を担当する言語です。似た名前の機能でも、戻り値や変更対象が違うことがあります。"
+              },
+              {
+                "text": "true",
+                "correct": false,
+                "reason": "不正解。=== は値だけでなく型も比較します。数値5と文字列'5'は別の型なので false です。"
+              },
+              {
+                "text": "エラー",
+                "correct": false,
+                "reason": "不正解。=== は値だけでなく型も比較します。数値5と文字列'5'は別の型なので false です。"
+              },
+              {
+                "text": "undefined",
+                "correct": false,
+                "reason": "不正解。=== は値だけでなく型も比較します。数値5と文字列'5'は別の型なので false です。"
+              }
+            ]
+          },
+          {
+            "q": "テンプレートリテラルの書き方は？",
+            "exp": "バッククォート(`)で囲み、${変数名}で変数を埋め込めます。文字列結合より読みやすく便利です。 JavaScriptは画面の操作やデータ処理を担当する言語です。似た名前の機能でも、戻り値や変更対象が違うことがあります。",
+            "choices": [
+              {
+                "text": "`Hello ${name}`",
+                "correct": true,
+                "reason": "正解。バッククォート(`)で囲み、${変数名}で変数を埋め込めます。文字列結合より読みやすく便利です。 JavaScriptは画面の操作やデータ処理を担当する言語です。似た名前の機能でも、戻り値や変更対象が違うことがあります。"
+              },
+              {
+                "text": "'Hello {name}'",
+                "correct": false,
+                "reason": "不正解。テンプレートリテラルはバッククォート ` ` で囲み、${}で変数を埋め込みます。"
+              },
+              {
+                "text": "\"Hello \"+name",
+                "correct": false,
+                "reason": "不正解。テンプレートリテラルはバッククォート ` ` で囲み、${}で変数を埋め込みます。"
+              },
+              {
+                "text": "'Hello'&name",
+                "correct": false,
+                "reason": "不正解。テンプレートリテラルはバッククォート ` ` で囲み、${}で変数を埋め込みます。"
+              }
+            ]
+          },
+          {
+            "q": "varとletの最大の違いは？",
+            "exp": "varは関数スコープ、letはブロックスコープです。if文やforループの中のletは外からアクセスできません。",
+            "choices": [
+              {
+                "text": "スコープの違い（関数 vs ブロック）",
+                "correct": true,
+                "reason": "正解。varは関数スコープ、letはブロックスコープです。if文やforループの中のletは外からアクセスできません。"
+              },
+              {
+                "text": "再代入できるかどうか",
+                "correct": false,
+                "reason": "不正解。varとletの代表的な違いはスコープです。varは関数スコープ、letはブロックスコープです。"
+              },
+              {
+                "text": "ホイスティングの有無",
+                "correct": false,
+                "reason": "不正解。varとletの代表的な違いはスコープです。varは関数スコープ、letはブロックスコープです。"
+              },
+              {
+                "text": "速度の違い",
+                "correct": false,
+                "reason": "不正解。varとletの代表的な違いはスコープです。varは関数スコープ、letはブロックスコープです。"
+              }
+            ]
+          },
+          {
+            "q": "typeof null の結果は？",
+            "exp": "typeof nullが'object'を返すのはJavaScriptの有名なバグです。nullは意図的な「空」を示すプリミティブ値です。",
+            "choices": [
+              {
+                "text": "'object'",
+                "correct": true,
+                "reason": "正解。typeof nullが'object'を返すのはJavaScriptの有名なバグです。nullは意図的な「空」を示すプリミティブ値です。"
+              },
+              {
+                "text": "'null'",
+                "correct": false,
+                "reason": "不正解。直感とは違いますが、JavaScriptでは typeof null は 'object' になります。歴史的な仕様です。"
+              },
+              {
+                "text": "'undefined'",
+                "correct": false,
+                "reason": "不正解。直感とは違いますが、JavaScriptでは typeof null は 'object' になります。歴史的な仕様です。"
+              },
+              {
+                "text": "'boolean'",
+                "correct": false,
+                "reason": "不正解。直感とは違いますが、JavaScriptでは typeof null は 'object' になります。歴史的な仕様です。"
+              }
+            ]
+          },
+          {
+            "q": "変数の値を数値に変換するJavaScriptの方法は？",
+            "exp": "Number(), parseInt(), parseFloat(), +演算子で数値に変換できます。int()はPythonの関数です。",
+            "choices": [
+              {
+                "text": "Number(x)",
+                "correct": true,
+                "reason": "正解。Number(), parseInt(), parseFloat(), +演算子で数値に変換できます。int()はPythonの関数です。"
+              },
+              {
+                "text": "int(x)",
+                "correct": false,
+                "reason": "不正解。JavaScriptではこの目的に「Number(x)」を使います。選択肢は文法・戻り値・用途のどこかが違います。"
+              },
+              {
+                "text": "toNumber(x)",
+                "correct": false,
+                "reason": "不正解。JavaScriptではこの目的に「Number(x)」を使います。選択肢は文法・戻り値・用途のどこかが違います。"
+              },
+              {
+                "text": "cast(x)",
+                "correct": false,
+                "reason": "不正解。JavaScriptではこの目的に「Number(x)」を使います。選択肢は文法・戻り値・用途のどこかが違います。"
+              }
+            ]
+          }
+        ]
+      },
+      "dom": {
+        "title": "DOM操作",
+        "icon": "🖥️",
+        "questions": [
+          {
+            "q": "idが'box'の要素を取得するコードは？",
+            "exp": "getElementById('id') でIDで要素を取得します。querySelector('#id') でも同じ結果が得られます。",
+            "choices": [
+              {
+                "text": "document.getElementById('box')",
+                "correct": true,
+                "reason": "正解。getElementById('id') でIDで要素を取得します。querySelector('#id') でも同じ結果が得られます。"
+              },
+              {
+                "text": "document.getElement('box')",
+                "correct": false,
+                "reason": "不正解。id指定で要素を取得する標準メソッドは document.getElementById() です。"
+              },
+              {
+                "text": "document.findById('box')",
+                "correct": false,
+                "reason": "不正解。id指定で要素を取得する標準メソッドは document.getElementById() です。"
+              },
+              {
+                "text": "document.select('#box')",
+                "correct": false,
+                "reason": "不正解。id指定で要素を取得する標準メソッドは document.getElementById() です。"
+              }
+            ]
+          },
+          {
+            "q": "要素のHTMLコンテンツを書き換えるプロパティは？",
+            "exp": "HTMLタグを含めて要素の中身を書き換えたい場合は innerHTML を使います。ただしユーザー入力をそのまま入れると危険な場合があるため、文字だけなら textContent が安全です。",
+            "choices": [
+              {
+                "text": "innerHTML",
+                "correct": true,
+                "reason": "正解。innerHTML は要素の中身をHTMLとして読み書きします。<strong>太字</strong> のようなタグも反映されます。"
+              },
+              {
+                "text": "textContent",
+                "correct": false,
+                "reason": "不正解ではありませんが、この問題は『HTMLコンテンツ』を書き換えるものを問うています。textContent はタグを解釈せず、純粋な文字として扱います。"
+              },
+              {
+                "text": "innerText",
+                "correct": false,
+                "reason": "不正解。innerText は表示上のテキスト取得・変更に近いプロパティです。HTMLタグを解釈して書き換える用途なら innerHTML です。"
+              },
+              {
+                "text": "outerHTML",
+                "correct": false,
+                "reason": "不正解。outerHTML はその要素自身を含めてHTML全体を書き換えます。要素の中身だけなら innerHTML です。"
+              }
+            ]
+          },
+          {
+            "q": "クリックイベントを登録する正しい方法は？",
+            "exp": "addEventListener('イベント名', 関数)が標準的な書き方です。1要素に複数のリスナーを追加できます。",
+            "choices": [
+              {
+                "text": "addEventListener('click', fn)",
+                "correct": true,
+                "reason": "正解。addEventListener('イベント名', 関数)が標準的な書き方です。1要素に複数のリスナーを追加できます。"
+              },
+              {
+                "text": "addEvent('click', fn)",
+                "correct": false,
+                "reason": "不正解。イベント登録の標準的な書き方は addEventListener('click', 関数) です。"
+              },
+              {
+                "text": "on('click', fn)",
+                "correct": false,
+                "reason": "不正解。イベント登録の標準的な書き方は addEventListener('click', 関数) です。"
+              },
+              {
+                "text": "attachEvent('click', fn)",
+                "correct": false,
+                "reason": "不正解。イベント登録の標準的な書き方は addEventListener('click', 関数) です。"
+              }
+            ]
+          },
+          {
+            "q": "要素にCSSクラスを追加するには？",
+            "exp": "classList.add()でクラスを追加、remove()で削除、toggle()でトグル、contains()で存在確認ができます。",
+            "choices": [
+              {
+                "text": "element.classList.add('cls')",
+                "correct": true,
+                "reason": "正解。classList.add()でクラスを追加、remove()で削除、toggle()でトグル、contains()で存在確認ができます。"
+              },
+              {
+                "text": "element.class += 'cls'",
+                "correct": false,
+                "reason": "不正解。JavaScriptではこの目的に「element.classList.add('cls')」を使います。選択肢は文法・戻り値・用途のどこかが違います。"
+              },
+              {
+                "text": "element.addClass('cls')",
+                "correct": false,
+                "reason": "不正解。JavaScriptではこの目的に「element.classList.add('cls')」を使います。選択肢は文法・戻り値・用途のどこかが違います。"
+              },
+              {
+                "text": "element.className.add('cls')",
+                "correct": false,
+                "reason": "不正解。JavaScriptではこの目的に「element.classList.add('cls')」を使います。選択肢は文法・戻り値・用途のどこかが違います。"
+              }
+            ]
+          },
+          {
+            "q": "新しいHTML要素を作成するメソッドは？",
+            "exp": "createElement(タグ名)で新しい要素を作り、appendChild()などでDOMに追加します。 JavaScriptは画面の操作やデータ処理を担当する言語です。似た名前の機能でも、戻り値や変更対象が違うことがあります。",
+            "choices": [
+              {
+                "text": "document.createElement('div')",
+                "correct": true,
+                "reason": "正解。createElement(タグ名)で新しい要素を作り、appendChild()などでDOMに追加します。"
+              },
+              {
+                "text": "document.createNode('div')",
+                "correct": false,
+                "reason": "不正解。新しい要素は document.createElement('タグ名') で作ります。"
+              },
+              {
+                "text": "new Element('div')",
+                "correct": false,
+                "reason": "不正解。新しい要素は document.createElement('タグ名') で作ります。"
+              },
+              {
+                "text": "document.newElement('div')",
+                "correct": false,
+                "reason": "不正解。新しい要素は document.createElement('タグ名') で作ります。"
+              }
+            ]
+          },
+          {
+            "q": "特定のCSSセレクターにマッチする全要素を取得するには？",
+            "exp": "querySelectorAll()はCSSセレクターにマッチするすべての要素をNodeListで返します。 JavaScriptは画面の操作やデータ処理を担当する言語です。似た名前の機能でも、戻り値や変更対象が違うことがあります。",
+            "choices": [
+              {
+                "text": "querySelectorAll('.cls')",
+                "correct": true,
+                "reason": "正解。querySelectorAll()はCSSセレクターにマッチするすべての要素をNodeListで返します。"
+              },
+              {
+                "text": "getElementsBySelector('.cls')",
+                "correct": false,
+                "reason": "不正解。JavaScriptではこの目的に「querySelectorAll('.cls')」を使います。選択肢は文法・戻り値・用途のどこかが違います。"
+              },
+              {
+                "text": "findAll('.cls')",
+                "correct": false,
+                "reason": "不正解。JavaScriptではこの目的に「querySelectorAll('.cls')」を使います。選択肢は文法・戻り値・用途のどこかが違います。"
+              },
+              {
+                "text": "getAll('.cls')",
+                "correct": false,
+                "reason": "不正解。JavaScriptではこの目的に「querySelectorAll('.cls')」を使います。選択肢は文法・戻り値・用途のどこかが違います。"
+              }
+            ]
+          },
+          {
+            "q": "ボタンを押したら文字を変える処理で一番関係が深いものは？",
+            "exp": "クリックを見張るのが addEventListener、文字を書き換えるのが textContent です。あなたのプレイグラウンドでもこの考え方がかなり重要です。",
+            "choices": [
+              {
+                "text": "addEventListener と textContent",
+                "correct": true,
+                "reason": "正解。クリックを見張るのが addEventListener、文字を書き換えるのが textContent です。あなたのプレイグラウンドでもこの考え方がかなり重要です。"
+              },
+              {
+                "text": "href と src",
+                "correct": false,
+                "reason": "不正解。クリックを検知するにはaddEventListener、文字を書き換えるにはtextContentが関係します。"
+              },
+              {
+                "text": "padding と margin",
+                "correct": false,
+                "reason": "不正解。クリックを検知するにはaddEventListener、文字を書き換えるにはtextContentが関係します。"
+              },
+              {
+                "text": "SELECT と WHERE",
+                "correct": false,
+                "reason": "不正解。クリックを検知するにはaddEventListener、文字を書き換えるにはtextContentが関係します。"
+              }
+            ]
+          },
+          {
+            "q": "querySelector('.btn') が取得するものは？",
+            "exp": "querySelectorはCSSセレクターで最初に一致した1つを取得します。全部欲しい場合は querySelectorAll を使います。",
+            "choices": [
+              {
+                "text": "最初に見つかった class='btn' の要素",
+                "correct": true,
+                "reason": "正解。querySelectorはCSSセレクターで最初に一致した1つを取得します。全部欲しい場合は querySelectorAll を使います。"
+              },
+              {
+                "text": "すべてのbtn要素",
+                "correct": false,
+                "reason": "不正解。すべて取得するならquerySelectorAll()です。querySelector()は最初の1つだけです。"
+              },
+              {
+                "text": "idがbtnの要素",
+                "correct": false,
+                "reason": "不正解。JavaScriptではこの目的に「最初に見つかった class='btn' の要素」を使います。選択肢は文法・戻り値・用途のどこかが違います。"
+              },
+              {
+                "text": "btnというタグ",
+                "correct": false,
+                "reason": "不正解。querySelector('.btn') はclassがbtnの最初の要素を取得します。"
+              }
+            ]
+          }
+        ]
+      },
+      "arrays": {
+        "title": "配列とメソッド",
+        "icon": "📋",
+        "questions": [
+          {
+            "q": "配列の末尾に要素を追加するメソッドは？",
+            "exp": "push()は末尾に追加します。pop()は末尾から取り出し、unshift()は先頭に追加、shift()は先頭から取り出します。",
+            "choices": [
+              {
+                "text": "push()",
+                "correct": true,
+                "reason": "正解。push()は末尾に追加します。pop()は末尾から取り出し、unshift()は先頭に追加、shift()は先頭から取り出します。"
+              },
+              {
+                "text": "append()",
+                "correct": false,
+                "reason": "不正解。append()はPythonのリストで使います。JavaScript配列の末尾追加はpush()です。"
+              },
+              {
+                "text": "add()",
+                "correct": false,
+                "reason": "不正解。JavaScriptではこの目的に「push()」を使います。選択肢は文法・戻り値・用途のどこかが違います。"
+              },
+              {
+                "text": "insert()",
+                "correct": false,
+                "reason": "不正解。JavaScriptではこの目的に「push()」を使います。選択肢は文法・戻り値・用途のどこかが違います。"
+              }
+            ]
+          },
+          {
+            "q": "[1,2,3].map(x => x*2) の結果は？",
+            "exp": "map()は各要素に関数を適用した新しい配列を返します。元の配列は変更されません。 JavaScriptは画面の操作やデータ処理を担当する言語です。似た名前の機能でも、戻り値や変更対象が違うことがあります。",
+            "choices": [
+              {
+                "text": "[2,4,6]",
+                "correct": true,
+                "reason": "正解。map()は各要素に関数を適用した新しい配列を返します。元の配列は変更されません。 JavaScriptは画面の操作やデータ処理を担当する言語です。似た名前の機能でも、戻り値や変更対象が違うことがあります。"
+              },
+              {
+                "text": "[1,2,3,2,4,6]",
+                "correct": false,
+                "reason": "不正解。map()は各要素を変換した新しい配列を返します。1,2,3を2倍するので[2,4,6]です。"
+              },
+              {
+                "text": "6",
+                "correct": false,
+                "reason": "不正解。map()は各要素を変換した新しい配列を返します。1,2,3を2倍するので[2,4,6]です。"
+              },
+              {
+                "text": "undefined",
+                "correct": false,
+                "reason": "不正解。map()は各要素を変換した新しい配列を返します。1,2,3を2倍するので[2,4,6]です。"
+              }
+            ]
+          },
+          {
+            "q": "条件に合う要素だけを取り出すメソッドは？",
+            "exp": "filter()は条件がtrueの要素だけで新しい配列を返します。find()は最初の1件のみ、some()はbooleanを返します。",
+            "choices": [
+              {
+                "text": "filter()",
+                "correct": true,
+                "reason": "正解。filter()は条件がtrueの要素だけで新しい配列を返します。find()は最初の1件のみ、some()はbooleanを返します。"
+              },
+              {
+                "text": "find()",
+                "correct": false,
+                "reason": "不正解。find()は最初に見つかった1件だけを返します。条件に合うもの全部ならfilter()です。"
+              },
+              {
+                "text": "some()",
+                "correct": false,
+                "reason": "不正解。条件に合う要素だけを配列として取り出すにはfilter()を使います。find()は最初の1件、some()は真偽値、reduce()は1つの値へ集約します。"
+              },
+              {
+                "text": "reduce()",
+                "correct": false,
+                "reason": "不正解。条件に合う要素だけを配列として取り出すにはfilter()を使います。find()は最初の1件、some()は真偽値、reduce()は1つの値へ集約します。"
+              }
+            ]
+          },
+          {
+            "q": "配列のすべての要素を1つの値にまとめるメソッドは？",
+            "exp": "reduce(callback, initialValue)は累積値と各要素を処理して最終的な1つの値を返します。",
+            "choices": [
+              {
+                "text": "reduce()",
+                "correct": true,
+                "reason": "正解。reduce(callback, initialValue)は累積値と各要素を処理して最終的な1つの値を返します。"
+              },
+              {
+                "text": "sum()",
+                "correct": false,
+                "reason": "不正解。配列全体を1つの値に畳み込む代表的なメソッドはreduce()です。"
+              },
+              {
+                "text": "combine()",
+                "correct": false,
+                "reason": "不正解。配列全体を1つの値に畳み込む代表的なメソッドはreduce()です。"
+              },
+              {
+                "text": "fold()",
+                "correct": false,
+                "reason": "不正解。配列全体を1つの値に畳み込む代表的なメソッドはreduce()です。"
+              }
+            ]
+          },
+          {
+            "q": "配列に特定の値が含まれるか確認するには？",
+            "exp": "includes(値)は配列に指定した値が含まれるかbooleanで返します。 JavaScriptは画面の操作やデータ処理を担当する言語です。似た名前の機能でも、戻り値や変更対象が違うことがあります。",
+            "choices": [
+              {
+                "text": "includes()",
+                "correct": true,
+                "reason": "正解。includes(値)は配列に指定した値が含まれるかbooleanで返します。 JavaScriptは画面の操作やデータ処理を担当する言語です。似た名前の機能でも、戻り値や変更対象が違うことがあります。"
+              },
+              {
+                "text": "contains()",
+                "correct": false,
+                "reason": "不正解。JavaScript配列に値が含まれるか調べるには includes() を使います。"
+              },
+              {
+                "text": "has()",
+                "correct": false,
+                "reason": "不正解。JavaScript配列に値が含まれるか調べるには includes() を使います。"
+              },
+              {
+                "text": "exists()",
+                "correct": false,
+                "reason": "不正解。JavaScript配列に値が含まれるか調べるには includes() を使います。"
+              }
+            ]
+          },
+          {
+            "q": "[1,2,3,4,5].slice(1,3) の結果は？",
+            "exp": "slice(start,end)はstartインデックス以上、endインデックス未満の要素を新しい配列で返します。",
+            "choices": [
+              {
+                "text": "[2,3]",
+                "correct": true,
+                "reason": "正解。slice(start,end)はstartインデックス以上、endインデックス未満の要素を新しい配列で返します。"
+              },
+              {
+                "text": "[1,2,3]",
+                "correct": false,
+                "reason": "不正解。slice(1,3)はインデックス1以上3未満を取り出すため、2と3だけになります。"
+              },
+              {
+                "text": "[3,4,5]",
+                "correct": false,
+                "reason": "不正解。slice(1,3)はインデックス1以上3未満を取り出すため、2と3だけになります。"
+              },
+              {
+                "text": "[2,3,4]",
+                "correct": false,
+                "reason": "不正解。slice(1,3)はインデックス1以上3未満を取り出すため、2と3だけになります。"
+              }
+            ]
+          }
+        ]
+      },
+      "functions": {
+        "title": "関数とアロー関数",
+        "icon": "⚙️",
+        "questions": [
+          {
+            "q": "xを2倍して返すアロー関数の正しい書き方は？",
+            "exp": "JavaScriptのアロー関数は 引数 => 戻り値 の形で書けます。式だけなら return を省略でき、x => x*2 は x*2 をそのまま返します。",
+            "choices": [
+              {
+                "text": "const f = x => x*2",
+                "correct": true,
+                "reason": "正解。JavaScriptのアロー関数は 引数 => 戻り値 の形で書けます。式だけなら return を省略でき、x => x*2 は x*2 をそのまま返します。"
+              },
+              {
+                "text": "const f = x => { x*2 }",
+                "correct": false,
+                "reason": "不正解。構文エラーではありませんが、波括弧を付けると処理ブロックになります。return がないため undefined を返します。"
+              },
+              {
+                "text": "function f(x) => x*2",
+                "correct": false,
+                "reason": "不正解。function宣言とアロー関数の書き方が混ざっています。function f(x) { return x*2; } か const f = x => x*2 のどちらかです。"
+              },
+              {
+                "text": "const f(x) = x*2",
+                "correct": false,
+                "reason": "不正解。JavaScriptでは const f = ... のように変数へ関数を代入します。const f(x) という関数定義はできません。"
+              }
+            ]
+          },
+          {
+            "q": "非同期処理を待つキーワードは？",
+            "exp": "awaitはPromiseの解決を待ちます。async関数の中でしか使えません。 JavaScriptは画面の操作やデータ処理を担当する言語です。似た名前の機能でも、戻り値や変更対象が違うことがあります。",
+            "choices": [
+              {
+                "text": "await",
+                "correct": true,
+                "reason": "正解。awaitはPromiseの解決を待ちます。async関数の中でしか使えません。 JavaScriptは画面の操作やデータ処理を担当する言語です。似た名前の機能でも、戻り値や変更対象が違うことがあります。"
+              },
+              {
+                "text": "async",
+                "correct": false,
+                "reason": "不正解。asyncは関数を非同期関数にするキーワードです。待つ処理そのものはawaitです。"
+              },
+              {
+                "text": "wait",
+                "correct": false,
+                "reason": "不正解。JavaScriptではこの目的に「await」を使います。選択肢は文法・戻り値・用途のどこかが違います。"
+              },
+              {
+                "text": "defer",
+                "correct": false,
+                "reason": "不正解。JavaScriptではこの目的に「await」を使います。選択肢は文法・戻り値・用途のどこかが違います。"
+              }
+            ]
+          },
+          {
+            "q": "コールバック関数とは？",
+            "exp": "コールバック関数は他の関数に引数として渡され、特定のタイミングで呼び出される関数です。 JavaScriptは画面の操作やデータ処理を担当する言語です。似た名前の機能でも、戻り値や変更対象が違うことがあります。",
+            "choices": [
+              {
+                "text": "別の関数に引数として渡される関数",
+                "correct": true,
+                "reason": "正解。コールバック関数は他の関数に引数として渡され、特定のタイミングで呼び出される関数です。 JavaScriptは画面の操作やデータ処理を担当する言語です。似た名前の機能でも、戻り値や変更対象が違うことがあります。"
+              },
+              {
+                "text": "戻り値のない関数",
+                "correct": false,
+                "reason": "不正解。JavaScriptではこの目的に「別の関数に引数として渡される関数」を使います。選択肢は文法・戻り値・用途のどこかが違います。"
+              },
+              {
+                "text": "非同期処理の関数",
+                "correct": false,
+                "reason": "不正解。JavaScriptではこの目的に「別の関数に引数として渡される関数」を使います。選択肢は文法・戻り値・用途のどこかが違います。"
+              },
+              {
+                "text": "エラー処理の関数",
+                "correct": false,
+                "reason": "不正解。JavaScriptではこの目的に「別の関数に引数として渡される関数」を使います。選択肢は文法・戻り値・用途のどこかが違います。"
+              }
+            ]
+          },
+          {
+            "q": "関数の引数にデフォルト値を設定するには？",
+            "exp": "引数名=デフォルト値 で設定します。引数が省略されたときやundefinedのときにデフォルト値が使われます。",
+            "choices": [
+              {
+                "text": "function f(x=10){}",
+                "correct": true,
+                "reason": "正解。引数名=デフォルト値 で設定します。引数が省略されたときやundefinedのときにデフォルト値が使われます。"
+              },
+              {
+                "text": "function f(x default 10){}",
+                "correct": false,
+                "reason": "不正解。JavaScriptのデフォルト引数は function f(x=10){} のように書きます。"
+              },
+              {
+                "text": "function f(x||10){}",
+                "correct": false,
+                "reason": "不正解。JavaScriptのデフォルト引数は function f(x=10){} のように書きます。"
+              },
+              {
+                "text": "function f(x:10){}",
+                "correct": false,
+                "reason": "不正解。JavaScriptのデフォルト引数は function f(x=10){} のように書きます。"
+              }
+            ]
+          },
+          {
+            "q": "スプレッド構文 [...arr1,...arr2] の目的は？",
+            "exp": "スプレッド構文 ... は、配列やオブジェクトの中身を展開する書き方です。[...arr1, ...arr2] は2つの配列の要素を展開して1つの配列にまとめます。",
+            "choices": [
+              {
+                "text": "配列の展開・結合",
+                "correct": true,
+                "reason": "正解。スプレッド構文 ... は、配列やオブジェクトの中身を展開する書き方です。[...arr1, ...arr2] は2つの配列の要素を展開して1つの配列にまとめます。"
+              },
+              {
+                "text": "配列のコピーのみ",
+                "correct": false,
+                "reason": "不正解。コピーにも使えますが、今回の [...arr1, ...arr2] は複数配列の展開・結合を表しています。"
+              },
+              {
+                "text": "配列の分割のみ",
+                "correct": false,
+                "reason": "不正解。... は配列を分割して取り出すというより、中身を展開する構文です。分割代入とは別です。"
+              },
+              {
+                "text": "1と2の両方",
+                "correct": false,
+                "reason": "不正解。コピーにも関連しますが、この問題で問うている [...arr1, ...arr2] の中心は『展開して結合する』ことです。"
+              }
+            ]
+          },
+          {
+            "q": "fetch() の戻り値は？",
+            "exp": "fetch()はPromiseを返します。.then()またはawaitで結果を受け取り、さらに.json()でJSONをパースします。",
+            "choices": [
+              {
+                "text": "Promise",
+                "correct": true,
+                "reason": "正解。fetch()はPromiseを返します。.then()またはawaitで結果を受け取り、さらに.json()でJSONをパースします。"
+              },
+              {
+                "text": "Response直接",
+                "correct": false,
+                "reason": "不正解。JavaScriptではこの目的に「Promise」を使います。選択肢は文法・戻り値・用途のどこかが違います。"
+              },
+              {
+                "text": "JSON",
+                "correct": false,
+                "reason": "不正解。JavaScriptではこの目的に「Promise」を使います。選択肢は文法・戻り値・用途のどこかが違います。"
+              },
+              {
+                "text": "undefined",
+                "correct": false,
+                "reason": "不正解。JavaScriptではこの目的に「Promise」を使います。選択肢は文法・戻り値・用途のどこかが違います。"
+              }
+            ]
+          }
+        ]
+      },
+      "async": {
+        "title": "非同期処理・API",
+        "icon": "🌐",
+        "questions": [
+          {
+            "q": "fetch でJSONデータを取得する正しい流れは？",
+            "exp": "fetch() はまずResponseオブジェクトを返すPromiseを作ります。JSONを使いたい場合は response.json() を呼び、その結果もPromiseとして受け取ります。",
+            "choices": [
+              {
+                "text": "fetch(url) → .json()",
+                "correct": true,
+                "reason": "正解。実際には fetch(url).then(res => res.json()).then(data => ...) のように、Responseからjson()でデータを取り出します。"
+              },
+              {
+                "text": "fetch(url) → .parse()",
+                "correct": false,
+                "reason": "不正解。Responseオブジェクトに .parse() というJSON取得メソッドはありません。"
+              },
+              {
+                "text": "fetch(url) → JSON.parse()",
+                "correct": false,
+                "reason": "不正解。JSON.parse() は文字列をJSONに変換する関数です。fetchのResponseから直接使う基本手順は res.json() です。"
+              },
+              {
+                "text": "fetch(url) → .data()",
+                "correct": false,
+                "reason": "不正解。.data() はライブラリなどで見かけることがありますが、標準のfetchでは res.json() を使います。"
+              }
+            ]
+          },
+          {
+            "q": "Promise の状態として存在しないのは？",
+            "exp": "Promiseの状態は pending（待機中）、fulfilled（成功）、rejected（失敗）の3つです。done は状態名ではありません。",
+            "choices": [
+              {
+                "text": "done",
+                "correct": true,
+                "reason": "正解。Promiseの状態は pending（待機中）、fulfilled（成功）、rejected（失敗）の3つです。done は状態名ではありません。"
+              },
+              {
+                "text": "pending",
+                "correct": false,
+                "reason": "不正解。JavaScriptではこの目的に「done」を使います。選択肢は文法・戻り値・用途のどこかが違います。"
+              },
+              {
+                "text": "fulfilled",
+                "correct": false,
+                "reason": "不正解。JavaScriptではこの目的に「done」を使います。選択肢は文法・戻り値・用途のどこかが違います。"
+              },
+              {
+                "text": "rejected",
+                "correct": false,
+                "reason": "不正解。JavaScriptではこの目的に「done」を使います。選択肢は文法・戻り値・用途のどこかが違います。"
+              }
+            ]
+          },
+          {
+            "q": "async/await でエラーを捕捉するには？",
+            "exp": "async関数内でawaitを使う場合、try...catchでエラーを捕捉します。Promiseチェーンなら.catch()が使えます。",
+            "choices": [
+              {
+                "text": "try...catch",
+                "correct": true,
+                "reason": "正解。async関数内でawaitを使う場合、try...catchでエラーを捕捉します。Promiseチェーンなら.catch()が使えます。"
+              },
+              {
+                "text": ".catch()",
+                "correct": false,
+                "reason": "不正解。async/awaitではtry...catchで例外としてエラーを捕捉するのが基本です。"
+              },
+              {
+                "text": "onerror",
+                "correct": false,
+                "reason": "不正解。async/awaitではtry...catchで例外としてエラーを捕捉するのが基本です。"
+              },
+              {
+                "text": "onreject",
+                "correct": false,
+                "reason": "不正解。async/awaitではtry...catchで例外としてエラーを捕捉するのが基本です。"
+              }
+            ]
+          },
+          {
+            "q": "複数のPromiseを並列実行して全部完了を待つには？",
+            "exp": "Promise.all()はすべてのPromiseが完了するまで待ちます。1つでも失敗すると即座にrejectします。",
+            "choices": [
+              {
+                "text": "Promise.all([p1,p2])",
+                "correct": true,
+                "reason": "正解。Promise.all()はすべてのPromiseが完了するまで待ちます。1つでも失敗すると即座にrejectします。"
+              },
+              {
+                "text": "Promise.any([p1,p2])",
+                "correct": false,
+                "reason": "不正解。複数のPromiseを並列実行し、全部完了を待つにはPromise.all()を使います。"
+              },
+              {
+                "text": "Promise.race([p1,p2])",
+                "correct": false,
+                "reason": "不正解。複数のPromiseを並列実行し、全部完了を待つにはPromise.all()を使います。"
+              },
+              {
+                "text": "Promise.run([p1,p2])",
+                "correct": false,
+                "reason": "不正解。複数のPromiseを並列実行し、全部完了を待つにはPromise.all()を使います。"
+              }
+            ]
+          },
+          {
+            "q": "localStorageにデータを保存するには？",
+            "exp": "setItem(キー,値)で保存、getItem(キー)で取得、removeItem(キー)で削除します。値は文字列として保存されます。",
+            "choices": [
+              {
+                "text": "localStorage.setItem('key','val')",
+                "correct": true,
+                "reason": "正解。setItem(キー,値)で保存、getItem(キー)で取得、removeItem(キー)で削除します。値は文字列として保存されます。"
+              },
+              {
+                "text": "localStorage.save('key','val')",
+                "correct": false,
+                "reason": "不正解。localStorageへ保存する標準メソッドは setItem(キー, 値) です。"
+              },
+              {
+                "text": "localStorage['key']='val'",
+                "correct": false,
+                "reason": "不正解。localStorageへ保存する標準メソッドは setItem(キー, 値) です。"
+              },
+              {
+                "text": "localStorage.put('key','val')",
+                "correct": false,
+                "reason": "不正解。localStorageへ保存する標準メソッドは setItem(キー, 値) です。"
+              }
+            ]
+          },
+          {
+            "q": "setTimeout(fn, 1000) の意味は？",
+            "exp": "setTimeoutは指定ミリ秒後に関数を1回だけ実行します。繰り返し実行にはsetIntervalを使います。",
+            "choices": [
+              {
+                "text": "1秒後にfnを1回実行",
+                "correct": true,
+                "reason": "正解。setTimeoutは指定ミリ秒後に関数を1回だけ実行します。繰り返し実行にはsetIntervalを使います。"
+              },
+              {
+                "text": "1秒ごとにfnを繰り返す",
+                "correct": false,
+                "reason": "不正解。setTimeout(fn,1000)は1000ミリ秒後、つまり1秒後に1回だけ実行します。"
+              },
+              {
+                "text": "fnを1000回実行",
+                "correct": false,
+                "reason": "不正解。setTimeout(fn,1000)は1000ミリ秒後、つまり1秒後に1回だけ実行します。"
+              },
+              {
+                "text": "fnを1ms後に実行",
+                "correct": false,
+                "reason": "不正解。setTimeout(fn,1000)は1000ミリ秒後、つまり1秒後に1回だけ実行します。"
+              }
+            ]
+          }
+        ]
+      }
+    }
+  },
+  "sql": {
+    "title": "SQL",
+    "emoji": "🗄️",
+    "desc": "データベースから情報を取り出すための言語",
+    "categories": {
+      "select": {
+        "title": "SELECTの基本",
+        "icon": "🔎",
+        "questions": [
+          {
+            "q": "usersテーブルから全カラムを取得するSQLは？",
+            "exp": "SQLでは SELECT で取得する列を指定し、FROM で対象テーブルを指定します。* は『すべてのカラム』という意味です。",
+            "choices": [
+              {
+                "text": "SELECT * FROM users;",
+                "correct": true,
+                "reason": "正解。SQLでは SELECT で取得する列を指定し、FROM で対象テーブルを指定します。* は『すべてのカラム』という意味です。"
+              },
+              {
+                "text": "GET * FROM users;",
+                "correct": false,
+                "reason": "不正解。SQLでは SELECT 取得列 FROM テーブル名 の順で書きます。全列は * です。"
+              },
+              {
+                "text": "SELECT users;",
+                "correct": false,
+                "reason": "不正解。SQLでは SELECT 取得列 FROM テーブル名 の順で書きます。全列は * です。"
+              },
+              {
+                "text": "FROM users SELECT *;",
+                "correct": false,
+                "reason": "不正解。SQLでは SELECT 取得列 FROM テーブル名 の順で書きます。全列は * です。"
+              }
+            ]
+          },
+          {
+            "q": "usersテーブルからnameカラムだけ取得するSQLは？",
+            "exp": "SQLでは SELECT の後に取得したいカラム名、FROM の後に対象テーブル名を書きます。nameカラムだけ欲しいなら SELECT name FROM users; です。",
+            "choices": [
+              {
+                "text": "SELECT name FROM users;",
+                "correct": true,
+                "reason": "正解。SELECT name でnameカラムを指定し、FROM users でusersテーブルから取得します。"
+              },
+              {
+                "text": "SELECT name;",
+                "correct": false,
+                "reason": "不正解。取得するカラム名はありますが、どのテーブルから取得するかを FROM で指定していません。"
+              },
+              {
+                "text": "GET name FROM users;",
+                "correct": false,
+                "reason": "不正解。GETはHTTP通信でよく使う言葉です。SQLで取得する基本命令はSELECTです。"
+              },
+              {
+                "text": "FROM users SELECT name;",
+                "correct": false,
+                "reason": "不正解。SQLは基本的に SELECT 列名 FROM テーブル名 の順に書きます。順番が逆です。"
+              }
+            ]
+          },
+          {
+            "q": "年齢が20以上のユーザーだけ取得する条件は？",
+            "exp": "SQLで条件を指定するには WHERE を使います。WHERE age >= 20 で『ageが20以上』の行だけに絞り込めます。",
+            "choices": [
+              {
+                "text": "WHERE age >= 20",
+                "correct": true,
+                "reason": "正解。SQLで条件を指定するには WHERE を使います。WHERE age >= 20 で『ageが20以上』の行だけに絞り込めます。"
+              },
+              {
+                "text": "IF age >= 20",
+                "correct": false,
+                "reason": "不正解。SQLではこの目的に「WHERE age >= 20」を使います。キーワードの順番や役割が違います。"
+              },
+              {
+                "text": "FILTER age >= 20",
+                "correct": false,
+                "reason": "不正解。SQLではこの目的に「WHERE age >= 20」を使います。キーワードの順番や役割が違います。"
+              },
+              {
+                "text": "WHEN age >= 20",
+                "correct": false,
+                "reason": "不正解。SQLではこの目的に「WHERE age >= 20」を使います。キーワードの順番や役割が違います。"
+              }
+            ]
+          },
+          {
+            "q": "取得結果を年齢の若い順に並べるには？",
+            "exp": "ORDER BY は並び替えです。ASCは昇順、DESCは降順です。年齢ならASCで若い順、DESCで高い順になります。",
+            "choices": [
+              {
+                "text": "ORDER BY age ASC",
+                "correct": true,
+                "reason": "正解。ORDER BY は並び替えです。ASCは昇順、DESCは降順です。年齢ならASCで若い順、DESCで高い順になります。"
+              },
+              {
+                "text": "SORT age ASC",
+                "correct": false,
+                "reason": "不正解。SQLではこの目的に「ORDER BY age ASC」を使います。キーワードの順番や役割が違います。"
+              },
+              {
+                "text": "ORDER age UP",
+                "correct": false,
+                "reason": "不正解。SQLではこの目的に「ORDER BY age ASC」を使います。キーワードの順番や役割が違います。"
+              },
+              {
+                "text": "GROUP BY age ASC",
+                "correct": false,
+                "reason": "不正解。GROUP BYは集計時のグループ化です。並び替えにはORDER BYを使います。"
+              }
+            ]
+          }
+        ]
+      },
+      "join": {
+        "title": "JOINの考え方",
+        "icon": "🔗",
+        "questions": [
+          {
+            "q": "usersとordersをuser_idで結合する代表的な書き方は？",
+            "exp": "JOINは複数テーブルをつなげる命令です。ON の後に『どの列同士を対応させるか』を書きます。 SQLはデータベースに問い合わせる言語です。SELECT、FROM、WHERE、JOINなどのキーワードがどの役割を持つかを整理すると読みやすくなります。",
+            "choices": [
+              {
+                "text": "JOIN orders ON users.id = orders.user_id",
+                "correct": true,
+                "reason": "正解。JOINは複数テーブルをつなげる命令です。ON の後に『どの列同士を対応させるか』を書きます。 SQLはデータベースに問い合わせる言語です。SELECT、FROM、WHERE、JOINなどのキーワードがどの役割を持つかを整理すると読みやすくなります。"
+              },
+              {
+                "text": "CONNECT orders WITH users.id",
+                "correct": false,
+                "reason": "不正解。SQLでテーブルを結合する基本構文はJOIN ... ON ...です。CONNECTやLINKではありません。"
+              },
+              {
+                "text": "MERGE users orders",
+                "correct": false,
+                "reason": "不正解。MERGEは一部DBで別用途のSQLとして存在しますが、基本的なテーブル結合にはJOINを使います。"
+              },
+              {
+                "text": "LINK orders BY user_id",
+                "correct": false,
+                "reason": "不正解。SQLでテーブルを結合する基本構文はJOIN ... ON ...です。CONNECTやLINKではありません。"
+              }
+            ]
+          },
+          {
+            "q": "LEFT JOIN の特徴として正しいものは？",
+            "exp": "LEFT JOINは左側のテーブルを基準にします。右側に対応データがなくても、左側の行は残り、右側はNULLになります。",
+            "choices": [
+              {
+                "text": "左側テーブルの行をできるだけ残す",
+                "correct": true,
+                "reason": "正解。LEFT JOINは左側のテーブルを基準にします。右側に対応データがなくても、左側の行は残り、右側はNULLになります。"
+              },
+              {
+                "text": "右側テーブルだけ残す",
+                "correct": false,
+                "reason": "不正解。LEFT JOINは左側テーブルを基準にし、右側に一致がなくても左側の行を残します。"
+              },
+              {
+                "text": "一致した行だけ残す",
+                "correct": false,
+                "reason": "不正解。LEFT JOINは左側テーブルを基準にし、右側に一致がなくても左側の行を残します。"
+              },
+              {
+                "text": "すべて削除する",
+                "correct": false,
+                "reason": "不正解。LEFT JOINは左側テーブルを基準にし、右側に一致がなくても左側の行を残します。"
+              }
+            ]
+          },
+          {
+            "q": "INNER JOIN の特徴は？",
+            "exp": "INNER JOINは両方のテーブルで条件に一致する行だけ取得します。対応データがない行は結果に出ません。 SQLはデータベースに問い合わせる言語です。SELECT、FROM、WHERE、JOINなどのキーワードがどの役割を持つかを整理すると読みやすくなります。",
+            "choices": [
+              {
+                "text": "両方に一致するデータだけ取得する",
+                "correct": true,
+                "reason": "正解。INNER JOINは両方のテーブルで条件に一致する行だけ取得します。対応データがない行は結果に出ません。"
+              },
+              {
+                "text": "左側だけ取得する",
+                "correct": false,
+                "reason": "不正解。SQLではこの目的に「両方に一致するデータだけ取得する」を使います。キーワードの順番や役割が違います。"
+              },
+              {
+                "text": "右側だけ取得する",
+                "correct": false,
+                "reason": "不正解。SQLではこの目的に「両方に一致するデータだけ取得する」を使います。キーワードの順番や役割が違います。"
+              },
+              {
+                "text": "重複を削除する",
+                "correct": false,
+                "reason": "不正解。SQLではこの目的に「両方に一致するデータだけ取得する」を使います。キーワードの順番や役割が違います。"
+              }
+            ]
+          },
+          {
+            "q": "JOINが必要になる場面として自然なのは？",
+            "exp": "SQLのJOINは、分かれて保存されているデータを関連付けて見るために使います。Webアプリの裏側でよく使われます。",
+            "choices": [
+              {
+                "text": "ユーザー情報と注文履歴を一緒に見たいとき",
+                "correct": true,
+                "reason": "正解。SQLのJOINは、分かれて保存されているデータを関連付けて見るために使います。Webアプリの裏側でよく使われます。"
+              },
+              {
+                "text": "文字色を変えたいとき",
+                "correct": false,
+                "reason": "不正解。SQLではこの目的に「ユーザー情報と注文履歴を一緒に見たいとき」を使います。キーワードの順番や役割が違います。"
+              },
+              {
+                "text": "ボタンを押したいとき",
+                "correct": false,
+                "reason": "不正解。SQLではこの目的に「ユーザー情報と注文履歴を一緒に見たいとき」を使います。キーワードの順番や役割が違います。"
+              },
+              {
+                "text": "画像を表示したいとき",
+                "correct": false,
+                "reason": "不正解。SQLではこの目的に「ユーザー情報と注文履歴を一緒に見たいとき」を使います。キーワードの順番や役割が違います。"
+              }
+            ]
+          }
+        ]
+      }
+    }
+  },
+  "csharp": {
+    "title": "C#",
+    "emoji": "🎮",
+    "desc": "Unityや業務アプリで使われるオブジェクト指向言語",
+    "categories": {
+      "basics": {
+        "title": "C#の基本",
+        "icon": "📘",
+        "questions": [
+          {
+            "q": "C#で整数の変数を宣言する書き方は？",
+            "exp": "C#では型を先に書きます。int は整数型です。JavaScriptのletとは違い、基本的に型を意識して書きます。",
+            "choices": [
+              {
+                "text": "int count = 0;",
+                "correct": true,
+                "reason": "正解。C#では型を先に書きます。int は整数型です。JavaScriptのletとは違い、基本的に型を意識して書きます。"
+              },
+              {
+                "text": "let count = 0;",
+                "correct": false,
+                "reason": "不正解。C#では基本的に型名を先に書きます。整数なら int count = 0; です。"
+              },
+              {
+                "text": "count := 0",
+                "correct": false,
+                "reason": "不正解。C#やUnityではこの目的に「int count = 0;」を使います。型名・イベント関数名・コンポーネント名が違います。"
+              },
+              {
+                "text": "var count: int = 0;",
+                "correct": false,
+                "reason": "不正解。C#では基本的に型名を先に書きます。整数なら int count = 0; です。"
+              }
+            ]
+          },
+          {
+            "q": "C#で文字列を表す型は？",
+            "exp": "C#では文字列型に string を使います。Pythonのstrとは名前が違います。 C#は型を意識して書く言語です。Unityではイベント関数やコンポーネント名を正確に覚えることが大切です。",
+            "choices": [
+              {
+                "text": "string",
+                "correct": true,
+                "reason": "正解。C#では文字列型に string を使います。Pythonのstrとは名前が違います。 C#は型を意識して書く言語です。Unityではイベント関数やコンポーネント名を正確に覚えることが大切です。"
+              },
+              {
+                "text": "str",
+                "correct": false,
+                "reason": "不正解。Pythonではstrを使いますが、C#の文字列型はstringです。"
+              },
+              {
+                "text": "StringText",
+                "correct": false,
+                "reason": "不正解。C#の文字列型としてこの名前は使いません。基本はstringです。"
+              },
+              {
+                "text": "text",
+                "correct": false,
+                "reason": "不正解。C#の文字列型としてこの名前は使いません。基本はstringです。"
+              }
+            ]
+          },
+          {
+            "q": "C#で条件分岐を書くときに必要な記号は？",
+            "exp": "C#では条件を丸括弧で囲み、処理を波括弧{}で囲みます。Pythonのようなインデントとコロンではありません。",
+            "choices": [
+              {
+                "text": "if (条件) { }",
+                "correct": true,
+                "reason": "正解。C#では条件を丸括弧で囲み、処理を波括弧{}で囲みます。Pythonのようなインデントとコロンではありません。"
+              },
+              {
+                "text": "if 条件:",
+                "correct": false,
+                "reason": "不正解。C#やUnityではこの目的に「if (条件) { }」を使います。型名・イベント関数名・コンポーネント名が違います。"
+              },
+              {
+                "text": "if 条件 then",
+                "correct": false,
+                "reason": "不正解。C#やUnityではこの目的に「if (条件) { }」を使います。型名・イベント関数名・コンポーネント名が違います。"
+              },
+              {
+                "text": "when 条件 do",
+                "correct": false,
+                "reason": "不正解。C#やUnityではこの目的に「if (条件) { }」を使います。型名・イベント関数名・コンポーネント名が違います。"
+              }
+            ]
+          },
+          {
+            "q": "Unityで毎フレーム呼ばれる代表的なメソッドは？",
+            "exp": "UnityのUpdate()は毎フレーム呼ばれる処理です。キー入力、移動、時間経過処理などによく使います。 C#は型を意識して書く言語です。Unityではイベント関数やコンポーネント名を正確に覚えることが大切です。",
+            "choices": [
+              {
+                "text": "Update()",
+                "correct": true,
+                "reason": "正解。UnityのUpdate()は毎フレーム呼ばれる処理です。キー入力、移動、時間経過処理などによく使います。"
+              },
+              {
+                "text": "Start()",
+                "correct": false,
+                "reason": "不正解。Start()は初期化時に1回呼ばれます。毎フレーム処理はUpdate()です。"
+              },
+              {
+                "text": "Awake()",
+                "correct": false,
+                "reason": "不正解。C#やUnityではこの目的に「Update()」を使います。型名・イベント関数名・コンポーネント名が違います。"
+              },
+              {
+                "text": "Loop()",
+                "correct": false,
+                "reason": "不正解。C#やUnityではこの目的に「Update()」を使います。型名・イベント関数名・コンポーネント名が違います。"
+              }
+            ]
+          }
+        ]
+      },
+      "unity": {
+        "title": "Unityでよく見るC#",
+        "icon": "🕹️",
+        "questions": [
+          {
+            "q": "Unityでゲーム開始時に1回だけ呼ばれる代表的なメソッドは？",
+            "exp": "Unityでは Start() が、スクリプトが有効になった後の最初のフレーム前に1回呼ばれます。初期設定を書く場所としてよく使われます。",
+            "choices": [
+              {
+                "text": "Start()",
+                "correct": true,
+                "reason": "正解。Unityでは Start() が、スクリプトが有効になった後の最初のフレーム前に1回呼ばれます。初期設定を書く場所としてよく使われます。"
+              },
+              {
+                "text": "Update()",
+                "correct": false,
+                "reason": "不正解。C#やUnityではこの目的に「Start()」を使います。型名・イベント関数名・コンポーネント名が違います。"
+              },
+              {
+                "text": "FixedEvery()",
+                "correct": false,
+                "reason": "不正解。Unityに FixedEvery() という標準メソッドはありません。物理更新なら FixedUpdate() です。"
+              },
+              {
+                "text": "Begin()",
+                "correct": false,
+                "reason": "不正解。Unityの標準イベント関数として Begin() は使いません。初期処理では Start() などを使います。"
+              }
+            ]
+          },
+          {
+            "q": "Unityでオブジェクトの位置を表すプロパティは？",
+            "exp": "transform.position はオブジェクトの位置情報です。プレイヤー移動やカメラ移動で頻繁に使います。",
+            "choices": [
+              {
+                "text": "transform.position",
+                "correct": true,
+                "reason": "正解。transform.position はオブジェクトの位置情報です。プレイヤー移動やカメラ移動で頻繁に使います。"
+              },
+              {
+                "text": "object.place",
+                "correct": false,
+                "reason": "不正解。Unityでオブジェクトの位置を表す基本プロパティはtransform.positionです。"
+              },
+              {
+                "text": "gameObject.location",
+                "correct": false,
+                "reason": "不正解。Unityでオブジェクトの位置を表す基本プロパティはtransform.positionです。"
+              },
+              {
+                "text": "position.transform",
+                "correct": false,
+                "reason": "不正解。Unityでオブジェクトの位置を表す基本プロパティはtransform.positionです。"
+              }
+            ]
+          },
+          {
+            "q": "Unityで2Dゲームの物理判定によく使うコンポーネントは？",
+            "exp": "Rigidbody2Dは2D物理挙動を扱うコンポーネントです。Collider2Dと組み合わせて当たり判定を作ります。",
+            "choices": [
+              {
+                "text": "Rigidbody2D",
+                "correct": true,
+                "reason": "正解。Rigidbody2Dは2D物理挙動を扱うコンポーネントです。Collider2Dと組み合わせて当たり判定を作ります。"
+              },
+              {
+                "text": "Body2D",
+                "correct": false,
+                "reason": "不正解。C#やUnityではこの目的に「Rigidbody2D」を使います。型名・イベント関数名・コンポーネント名が違います。"
+              },
+              {
+                "text": "PhysicsObject",
+                "correct": false,
+                "reason": "不正解。C#やUnityではこの目的に「Rigidbody2D」を使います。型名・イベント関数名・コンポーネント名が違います。"
+              },
+              {
+                "text": "ColliderMove",
+                "correct": false,
+                "reason": "不正解。C#やUnityではこの目的に「Rigidbody2D」を使います。型名・イベント関数名・コンポーネント名が違います。"
+              }
+            ]
+          },
+          {
+            "q": "C#で1行コメントを書く記号は？",
+            "exp": "C#の1行コメントは // です。複数行コメントには /* ... */ を使えます。HTMLのコメントは <!-- ... --> です。",
+            "choices": [
+              {
+                "text": "// コメント",
+                "correct": true,
+                "reason": "正解。C#の1行コメントは // です。複数行コメントには /* ... */ を使えます。HTMLのコメントは <!-- ... --> です。"
+              },
+              {
+                "text": "# コメント",
+                "correct": false,
+                "reason": "不正解。C#やUnityではこの目的に「// コメント」を使います。型名・イベント関数名・コンポーネント名が違います。"
+              },
+              {
+                "text": "<!-- コメント -->",
+                "correct": false,
+                "reason": "不正解。C#やUnityではこの目的に「// コメント」を使います。型名・イベント関数名・コンポーネント名が違います。"
+              },
+              {
+                "text": "<!-- コメント -->",
+                "correct": false,
+                "reason": "不正解。C#やUnityではこの目的に「// コメント」を使います。型名・イベント関数名・コンポーネント名が違います。"
+              }
+            ]
+          }
+        ]
+      }
+    }
+  },
+  "java": {
+    "title": "Java",
+    "emoji": "☕",
+    "desc": "Android・業務システムなどで使われる堅めの言語",
+    "categories": {
+      "basics": {
+        "title": "Javaの基本",
+        "icon": "☕",
+        "questions": [
+          {
+            "q": "Javaで画面に文字を出力する代表的な書き方は？",
+            "exp": "Javaでは System.out.println() を使ってコンソールに出力します。Pythonのprint()より長いですが、Javaでは定番です。",
+            "choices": [
+              {
+                "text": "System.out.println(\"Hello\");",
+                "correct": true,
+                "reason": "正解。Javaでは System.out.println() を使ってコンソールに出力します。Pythonのprint()より長いですが、Javaでは定番です。"
+              },
+              {
+                "text": "print(\"Hello\")",
+                "correct": false,
+                "reason": "不正解。Javaのコンソール出力は System.out.println(...) が代表的です。"
+              },
+              {
+                "text": "console.log(\"Hello\")",
+                "correct": false,
+                "reason": "不正解。Javaのコンソール出力は System.out.println(...) が代表的です。"
+              },
+              {
+                "text": "echo \"Hello\";",
+                "correct": false,
+                "reason": "不正解。Javaのコンソール出力は System.out.println(...) が代表的です。"
+              }
+            ]
+          },
+          {
+            "q": "Javaで整数の変数を宣言する書き方は？",
+            "exp": "JavaもC#と同じく型を先に書く言語です。int は整数、String は文字列を表します。 Javaはクラスを中心に書く静的型付け言語です。型、クラス、アクセス修飾子の役割を分けて覚えると理解しやすくなります。",
+            "choices": [
+              {
+                "text": "int age = 20;",
+                "correct": true,
+                "reason": "正解。JavaもC#と同じく型を先に書く言語です。int は整数、String は文字列を表します。 Javaはクラスを中心に書く静的型付け言語です。型、クラス、アクセス修飾子の役割を分けて覚えると理解しやすくなります。"
+              },
+              {
+                "text": "let age = 20;",
+                "correct": false,
+                "reason": "不正解。Javaではこの目的に「int age = 20;」が最も合います。型・クラス・アクセス修飾子の役割が違います。"
+              },
+              {
+                "text": "age = 20",
+                "correct": false,
+                "reason": "不正解。Javaではこの目的に「int age = 20;」が最も合います。型・クラス・アクセス修飾子の役割が違います。"
+              },
+              {
+                "text": "integer age := 20;",
+                "correct": false,
+                "reason": "不正解。Javaではこの目的に「int age = 20;」が最も合います。型・クラス・アクセス修飾子の役割が違います。"
+              }
+            ]
+          },
+          {
+            "q": "Javaの文字列型は？",
+            "exp": "Javaでは文字列型は String と大文字始まりです。C#のstringとは表記が違います。 Javaはクラスを中心に書く静的型付け言語です。型、クラス、アクセス修飾子の役割を分けて覚えると理解しやすくなります。",
+            "choices": [
+              {
+                "text": "String",
+                "correct": true,
+                "reason": "正解。Javaでは文字列型は String と大文字始まりです。C#のstringとは表記が違います。 Javaはクラスを中心に書く静的型付け言語です。型、クラス、アクセス修飾子の役割を分けて覚えると理解しやすくなります。"
+              },
+              {
+                "text": "string",
+                "correct": false,
+                "reason": "不正解。Javaの文字列型は大文字始まりのStringです。小文字のstringではありません。"
+              },
+              {
+                "text": "str",
+                "correct": false,
+                "reason": "不正解。Javaの文字列型は大文字始まりのStringです。小文字のstringではありません。"
+              },
+              {
+                "text": "Text",
+                "correct": false,
+                "reason": "不正解。Javaの文字列型は大文字始まりのStringです。小文字のstringではありません。"
+              }
+            ]
+          },
+          {
+            "q": "Javaで条件分岐を書く正しい形は？",
+            "exp": "JavaではC#やJavaScriptに近く、ifの条件を丸括弧で囲み、処理を波括弧{}で囲みます。 Javaはクラスを中心に書く静的型付け言語です。型、クラス、アクセス修飾子の役割を分けて覚えると理解しやすくなります。",
+            "choices": [
+              {
+                "text": "if (score >= 70) { }",
+                "correct": true,
+                "reason": "正解。JavaではC#やJavaScriptに近く、ifの条件を丸括弧で囲み、処理を波括弧{}で囲みます。 Javaはクラスを中心に書く静的型付け言語です。型、クラス、アクセス修飾子の役割を分けて覚えると理解しやすくなります。"
+              },
+              {
+                "text": "if score >= 70:",
+                "correct": false,
+                "reason": "不正解。Javaではこの目的に「if (score >= 70) { }」が最も合います。型・クラス・アクセス修飾子の役割が違います。"
+              },
+              {
+                "text": "if score >= 70 then",
+                "correct": false,
+                "reason": "不正解。Javaではこの目的に「if (score >= 70) { }」が最も合います。型・クラス・アクセス修飾子の役割が違います。"
+              },
+              {
+                "text": "when score >= 70 { }",
+                "correct": false,
+                "reason": "不正解。Javaではこの目的に「if (score >= 70) { }」が最も合います。型・クラス・アクセス修飾子の役割が違います。"
+              }
+            ]
+          }
+        ]
+      },
+      "oop": {
+        "title": "クラスとオブジェクト",
+        "icon": "🏛️",
+        "questions": [
+          {
+            "q": "Javaでクラスを定義するキーワードは？",
+            "exp": "Javaはクラスを中心に書く言語です。class キーワードで設計図を作り、そこからオブジェクトを作ります。 Javaはクラスを中心に書く静的型付け言語です。型、クラス、アクセス修飾子の役割を分けて覚えると理解しやすくなります。",
+            "choices": [
+              {
+                "text": "class",
+                "correct": true,
+                "reason": "正解。Javaはクラスを中心に書く言語です。class キーワードで設計図を作り、そこからオブジェクトを作ります。"
+              },
+              {
+                "text": "def",
+                "correct": false,
+                "reason": "不正解。Javaでクラスを定義するキーワードはclassです。"
+              },
+              {
+                "text": "function",
+                "correct": false,
+                "reason": "不正解。Javaでクラスを定義するキーワードはclassです。"
+              },
+              {
+                "text": "object",
+                "correct": false,
+                "reason": "不正解。Javaでクラスを定義するキーワードはclassです。"
+              }
+            ]
+          },
+          {
+            "q": "new キーワードの役割は？",
+            "exp": "new はクラスという設計図から実体を作るために使います。例：new Player() のように書きます。 Javaはクラスを中心に書く静的型付け言語です。型、クラス、アクセス修飾子の役割を分けて覚えると理解しやすくなります。",
+            "choices": [
+              {
+                "text": "クラスからインスタンスを作る",
+                "correct": true,
+                "reason": "正解。new はクラスという設計図から実体を作るために使います。例：new Player() のように書きます。"
+              },
+              {
+                "text": "新しい変数名を作る",
+                "correct": false,
+                "reason": "不正解。newはクラスという設計図から実体（インスタンス）を作るために使います。"
+              },
+              {
+                "text": "関数を呼ぶ",
+                "correct": false,
+                "reason": "不正解。newはクラスという設計図から実体（インスタンス）を作るために使います。"
+              },
+              {
+                "text": "エラーを消す",
+                "correct": false,
+                "reason": "不正解。newはクラスという設計図から実体（インスタンス）を作るために使います。"
+              }
+            ]
+          },
+          {
+            "q": "private の意味として正しいものは？",
+            "exp": "privateはアクセス修飾子です。外部から勝手に変更されたくないデータを守るために使います。 Javaはクラスを中心に書く静的型付け言語です。型、クラス、アクセス修飾子の役割を分けて覚えると理解しやすくなります。",
+            "choices": [
+              {
+                "text": "クラスの外から直接触れない",
+                "correct": true,
+                "reason": "正解。privateはアクセス修飾子です。外部から勝手に変更されたくないデータを守るために使います。 Javaはクラスを中心に書く静的型付け言語です。型、クラス、アクセス修飾子の役割を分けて覚えると理解しやすくなります。"
+              },
+              {
+                "text": "誰でも触れる",
+                "correct": false,
+                "reason": "不正解。Javaではこの目的に「クラスの外から直接触れない」が最も合います。型・クラス・アクセス修飾子の役割が違います。"
+              },
+              {
+                "text": "自動で保存される",
+                "correct": false,
+                "reason": "不正解。Javaではこの目的に「クラスの外から直接触れない」が最も合います。型・クラス・アクセス修飾子の役割が違います。"
+              },
+              {
+                "text": "高速になる",
+                "correct": false,
+                "reason": "不正解。Javaではこの目的に「クラスの外から直接触れない」が最も合います。型・クラス・アクセス修飾子の役割が違います。"
+              }
+            ]
+          },
+          {
+            "q": "public の意味として正しいものは？",
+            "exp": "publicは外部からアクセス可能であることを示します。privateと対になる基本概念です。 Javaはクラスを中心に書く静的型付け言語です。型、クラス、アクセス修飾子の役割を分けて覚えると理解しやすくなります。",
+            "choices": [
+              {
+                "text": "外部からアクセスできる",
+                "correct": true,
+                "reason": "正解。publicは外部からアクセス可能であることを示します。privateと対になる基本概念です。 Javaはクラスを中心に書く静的型付け言語です。型、クラス、アクセス修飾子の役割を分けて覚えると理解しやすくなります。"
+              },
+              {
+                "text": "外部から隠す",
+                "correct": false,
+                "reason": "不正解。Javaではこの目的に「外部からアクセスできる」が最も合います。型・クラス・アクセス修飾子の役割が違います。"
+              },
+              {
+                "text": "1回だけ実行する",
+                "correct": false,
+                "reason": "不正解。Javaではこの目的に「外部からアクセスできる」が最も合います。型・クラス・アクセス修飾子の役割が違います。"
+              },
+              {
+                "text": "数値専用にする",
+                "correct": false,
+                "reason": "不正解。Javaではこの目的に「外部からアクセスできる」が最も合います。型・クラス・アクセス修飾子の役割が違います。"
+              }
+            ]
+          }
+        ]
+      }
+    }
+  }
+};
+// ================================================================
+// STATE
+// ================================================================
+let reviewList = [];
+try { reviewList = JSON.parse(localStorage.getItem('cq_rv')||'[]'); } catch(e){ reviewList=[]; }
+
+let progressStore = {};
+try { progressStore = JSON.parse(localStorage.getItem('cq_progress')||'{}'); } catch(e){ progressStore={}; }
+
+let curLang = null;
+let curCat = null;
+let curQs = [];
+let curIdx = 0;
+let correctCnt = 0;
+let isReview = false;
+let newMistakes = [];
+
+// ================================================================
+// NAV  — シンプル：全ページhide → 指定ページshow
+// ================================================================
+function nav(pageId) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.getElementById(pageId).classList.add('active');
+  if (pageId === 'pg-home') refreshHome();
+}
+
+function backFromQuiz() {
+  if (confirm('メインメニューに戻りますか？（進捗はリセットされます）')) {
+    nav('pg-home');
+  }
+}
+
+// ================================================================
+// PROGRESS HELPERS
+// ================================================================
+function progressKey(lk, ck) {
+  return lk + '::' + ck;
+}
+
+function getCatProgress(lk, ck) {
+  return progressStore[progressKey(lk, ck)] || {
+    attempts: 0,
+    bestPct: 0,
+    bestCorrect: 0,
+    total: 0,
+    lastPct: 0,
+    lastCorrect: 0,
+    updatedAt: null
+  };
+}
+
+function saveProgress() {
+  try { localStorage.setItem('cq_progress', JSON.stringify(progressStore)); } catch(e){}
+}
+
+function recordCategoryProgress(lk, ck, correct, total) {
+  if (!lk || !ck || !total) return;
+  const key = progressKey(lk, ck);
+  const prev = getCatProgress(lk, ck);
+  const pct = Math.round(correct / total * 100);
+
+  progressStore[key] = {
+    attempts: (prev.attempts || 0) + 1,
+    bestPct: Math.max(prev.bestPct || 0, pct),
+    bestCorrect: pct >= (prev.bestPct || 0) ? correct : (prev.bestCorrect || 0),
+    total,
+    lastPct: pct,
+    lastCorrect: correct,
+    updatedAt: new Date().toISOString()
+  };
+  saveProgress();
+}
+
+function getLanguageProgress(lk) {
+  const lang = DATA[lk];
+  const entries = Object.entries(lang.categories);
+  if (!entries.length) return {done:0,total:0,avg:0,attempted:0};
+
+  let done = 0;
+  let sum = 0;
+  let attempted = 0;
+
+  entries.forEach(([ck]) => {
+    const p = getCatProgress(lk, ck);
+    if (p.attempts > 0) attempted++;
+    if ((p.bestPct || 0) >= 100) done++;
+    sum += p.bestPct || 0;
+  });
+
+  return {
+    done,
+    total: entries.length,
+    avg: Math.round(sum / entries.length),
+    attempted
+  };
+}
+
+function clearReviewList(event) {
+  if (event) event.stopPropagation();
+  if (!reviewList.length) { showToast('復習リストはすでに空です'); return; }
+  if (!confirm('復習リストを空にしますか？')) return;
+  reviewList = [];
+  saveReview();
+  refreshHome();
+  showToast('復習リストを空にしました');
+}
+
+function clearProgress(event) {
+  if (event) event.stopPropagation();
+  if (!confirm('カテゴリごとの進捗をリセットしますか？')) return;
+  progressStore = {};
+  saveProgress();
+  buildHome();
+  showToast('進捗をリセットしました');
+}
+
+// ================================================================
+// HOME
+// ================================================================
+function refreshHome() {
+  const n = reviewList.length;
+  document.getElementById('rev-badge').textContent = n;
+
+  if (n === 0) {
+    document.getElementById('rev-sub').textContent = '復習リストは空です';
+    return;
+  }
+
+  const langCounts = {};
+  reviewList.forEach(q => {
+    const lk = q._lang || 'unknown';
+    langCounts[lk] = (langCounts[lk] || 0) + 1;
+  });
+
+  const summary = Object.entries(langCounts)
+    .sort((a,b)=>b[1]-a[1])
+    .slice(0,2)
+    .map(([lk,count]) => (DATA[lk] ? DATA[lk].title : 'その他') + count + '問')
+    .join(' / ');
+
+  document.getElementById('rev-sub').textContent = summary ? `${n}問が復習待ちです（${summary}）` : n+'問が復習待ちです';
+}
+
+function buildHome() {
+  const ll = document.getElementById('lang-list');
+  ll.innerHTML = '';
+  Object.entries(DATA).forEach(([lk, lang]) => {
+    const totalQ = Object.values(lang.categories).reduce((s,c)=>s+c.questions.length, 0);
+    const catCount = Object.keys(lang.categories).length;
+    const stripeColors = {python:'#3b82f6,#06b6d4', html:'#f97316,#ef4444', css:'#06b6d4,#6366f1', javascript:'#eab308,#f97316'};
+    const lp = getLanguageProgress(lk);
+    const card = document.createElement('div');
+    card.className = 'lang-card';
+    card.innerHTML = `
+      <div class="lang-stripe" style="background:linear-gradient(180deg,${stripeColors[lk]||'#4f8ef7,#a78bfa'})"></div>
+      <div class="lang-emoji">${lang.emoji}</div>
+      <div class="lang-info">
+        <div class="lang-name">${lang.title}</div>
+        <div class="lang-desc">${lang.desc}</div>
+        <div class="progress-mini"><div class="progress-mini-fill" style="width:${lp.avg}%"></div></div>
+        <div class="progress-text">平均ベスト ${lp.avg}% ・ 完了 ${lp.done}/${lp.total}</div>
+      </div>
+      <div class="lang-meta">
+        <div class="lang-qcount">${totalQ}問</div>
+        <div class="lang-catc">${catCount}カテゴリー</div>
+      </div>
+      <div class="lang-arr">›</div>`;
+    card.onclick = () => openCat(lk);
+    ll.appendChild(card);
+  });
+  refreshHome();
+}
+
+// ================================================================
+// CATEGORY PAGE
+// ================================================================
+function openCat(lk) {
+  curLang = lk;
+  const lang = DATA[lk];
+  document.getElementById('cat-title').textContent = lang.emoji + ' ' + lang.title;
+  document.getElementById('cat-sub').textContent = Object.keys(lang.categories).length + ' カテゴリー';
+  const cl = document.getElementById('cat-list');
+  cl.innerHTML = '';
+  Object.entries(lang.categories).forEach(([ck, cat]) => {
+    const cp = getCatProgress(lk, ck);
+    const subText = cp.attempts > 0
+      ? `${cat.questions.length}問 ・ ベスト ${cp.bestPct}% ・ ${cp.attempts}回`
+      : `${cat.questions.length}問 ・ 未挑戦`;
+    const item = document.createElement('div');
+    item.className = 'cat-card';
+    item.innerHTML = `
+      <div class="cat-icon">${cat.icon}</div>
+      <div class="cat-body">
+        <div class="cat-title">${cat.title}</div>
+        <div class="cat-sub">${subText}</div>
+        <div class="cat-progress"><div class="cat-progress-fill" style="width:${cp.bestPct || 0}%"></div></div>
+      </div>
+      <div class="cat-pill">${cp.attempts > 0 ? cp.bestPct + '%' : cat.questions.length + 'Q'}</div>
+      <div class="cat-arr">›</div>`;
+    item.onclick = () => startQuiz(lk, ck);
+    cl.appendChild(item);
+  });
+  nav('pg-cat');
+}
+
+// ================================================================
+// QUIZ HELPERS
+// ================================================================
+function cloneObj(obj) {
+  return JSON.parse(JSON.stringify(obj));
+}
+
+function shuffleArray(arr) {
+  const copy = arr.slice();
+  for (let i = copy.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [copy[i], copy[j]] = [copy[j], copy[i]];
+  }
+  return copy;
+}
+
+function normalizeChoices(source) {
+  if (Array.isArray(source.choices) && source.choices.length > 0) {
+    return source.choices.map(choice => ({
+      text: String(choice.text),
+      correct: !!choice.correct,
+      reason: choice.reason || choice.why || ''
+    }));
+  }
+
+  if (Array.isArray(source.a)) {
+    return source.a.map((text, index) => ({
+      text: String(text),
+      correct: index === source.c,
+      reason: source.why && source.why[index] ? source.why[index] : ''
+    }));
+  }
+
+  return [];
+}
+
+function prepareQuestion(rawQuestion) {
+  const source = cloneObj(rawQuestion._source || rawQuestion);
+  const baseChoices = normalizeChoices(source);
+
+  const correctCount = baseChoices.filter(choice => choice.correct).length;
+  if (correctCount !== 1) {
+    console.warn('正解フラグが1つではない問題があります:', source.q, baseChoices);
+  }
+
+  const prepared = {
+    q: source.q,
+    exp: source.exp || '',
+    _source: {
+      q: source.q,
+      exp: source.exp || '',
+      choices: baseChoices.map(choice => ({...choice}))
+    },
+    choices: shuffleArray(baseChoices).map(choice => ({...choice}))
+  };
+
+  // 古い処理や復習データとの互換用。実際の判定は choices[].correct を使う。
+  prepared.a = prepared.choices.map(choice => choice.text);
+  prepared.c = prepared.choices.findIndex(choice => choice.correct);
+
+  return prepared;
+}
+
+function renderExplanation(q) {
+  const choices = q.choices || [];
+
+  let html = `<div>${esc(q.exp || '')}</div>`;
+  html += `<div style="margin-top:12px;padding-top:10px;border-top:1px solid var(--bd);">`;
+  html += `<div style="margin-bottom:8px;color:var(--tx);font-weight:700;">選択肢ごとの確認</div>`;
+
+  choices.forEach((choice, i) => {
+    const mark = choice.correct ? '✅' : '❌';
+    const color = choice.correct ? 'var(--gr)' : 'var(--rd)';
+    html += `
+      <div style="margin-top:8px;padding:9px 10px;border-radius:8px;background:var(--sf3);border:1px solid var(--bd);">
+        <div style="font-family:var(--mono);font-size:11px;color:${color};font-weight:700;margin-bottom:4px;">
+          ${mark} ${['A','B','C','D'][i]}：${esc(choice.text)}
+        </div>
+        <div style="font-size:12px;line-height:1.7;color:var(--sub);">
+          ${esc(choice.reason || '')}
+        </div>
+      </div>`;
+  });
+
+  html += `</div>`;
+  return html;
+}
+
+// ================================================================
+// QUIZ
+// ================================================================
+function startQuiz(lk, ck) {
+  isReview = false;
+  curLang = lk;
+  curCat = ck;
+  const cat = DATA[lk].categories[ck];
+  curQs = cat.questions.map(q => prepareQuestion(q));
+  curIdx = 0; correctCnt = 0; newMistakes = [];
+  document.getElementById('qtitle').textContent = cat.icon + ' ' + cat.title;
+  nav('pg-quiz');
+  renderQ();
+}
+
+function startReview() {
+  if (!reviewList.length) { showToast('復習リストが空です 🎉'); return; }
+  isReview = true;
+  curCat = null;
+  curQs = reviewList.map(q => prepareQuestion(q));
+  curIdx = 0; correctCnt = 0; newMistakes = [];
+  document.getElementById('qtitle').textContent = '🔁 復習モード';
+  nav('pg-quiz');
+  renderQ();
+}
+
+function renderQ() {
+  const q = curQs[curIdx];
+  const total = curQs.length;
+  document.getElementById('qsub').textContent = (curIdx+1) + ' / ' + total + ' 問目';
+  document.getElementById('qprog').style.width = (curIdx/total*100) + '%';
+
+  const lines = q.q.split('\n');
+  let html = esc(lines[0]);
+  if (lines.length > 1) {
+    html += '<div class="q-code">' + esc(lines.slice(1).join('\n')) + '</div>';
+  }
+  document.getElementById('qtext').innerHTML = html;
+
+  const choices = q.choices || [];
+  const cl = document.getElementById('choices');
+  cl.innerHTML = '';
+
+  choices.forEach((choice, i) => {
+    const btn = document.createElement('button');
+    btn.className = 'choice';
+    btn.innerHTML = `<div class="ckey">${['A','B','C','D'][i]}</div><div class="ctxt">${esc(choice.text)}</div>`;
+    btn.onclick = () => onAnswer(choice, q, i);
+    cl.appendChild(btn);
+  });
+
+  document.getElementById('feedback').className = 'feedback';
+  document.getElementById('fb-ans').innerHTML = '';
+  document.getElementById('fb-exp').textContent = '';
+  const nb = document.getElementById('next-btn');
+  nb.classList.remove('show');
+  nb.textContent = (curIdx+1 < total) ? '次の問題へ →' : '結果を見る →';
+
+  document.getElementById('pg-quiz').querySelector('.pscroll').scrollTop = 0;
+}
+
+function onAnswer(selectedChoice, q, selectedIndex) {
+  const btns = document.querySelectorAll('#pg-quiz .choice');
+  btns.forEach(b => b.disabled = true);
+
+  const choices = q.choices || [];
+  const correctIndex = choices.findIndex(choice => choice.correct);
+  const correctChoice = choices[correctIndex];
+  const isOk = !!selectedChoice.correct;
+
+  if (correctIndex >= 0 && btns[correctIndex]) btns[correctIndex].classList.add('rev');
+  if (btns[selectedIndex]) btns[selectedIndex].classList.add(isOk ? 'ok' : 'ng');
+
+  if (isOk) {
+    correctCnt++;
+    if (isReview) {
+      reviewList = reviewList.filter(r => r.q !== q.q);
+      saveReview();
+    }
+  } else {
+    if (!isReview) {
+      const dup = reviewList.some(r => r.q === q.q);
+      if (!dup) {
+        const reviewItem = cloneObj(q._source || q);
+        reviewItem._lang = curLang;
+        reviewItem._cat = curCat;
+        reviewList.push(reviewItem);
+        newMistakes.push(q);
+        saveReview();
+      }
+    }
+  }
+
+  document.getElementById('fb-head').textContent = isOk ? '正解！🎉' : '不正解... ❌';
+  document.getElementById('fb-ans').innerHTML = isOk ? '' : `<div class="fb-ans">正解: ${esc(correctChoice ? correctChoice.text : '')}</div>`;
+  document.getElementById('fb-exp').innerHTML = renderExplanation(q);
+  document.getElementById('feedback').className = 'feedback ' + (isOk ? 'ok' : 'ng');
+  document.getElementById('next-btn').classList.add('show');
+}
+
+function nextQ() {
+  curIdx++;
+  if (curIdx >= curQs.length) showResult();
+  else renderQ();
+}
+
+// ================================================================
+// RESULT
+// ================================================================
+function showResult() {
+  const total = curQs.length;
+  const pct = Math.round(correctCnt/total*100);
+  if (!isReview) recordCategoryProgress(curLang, curCat, correctCnt, total);
+  let gc, trophy, msg;
+  if (pct===100) { gc='gp'; trophy='🏆'; msg='完璧！全問正解です！素晴らしい👏'; }
+  else if (pct>=70){ gc='gg'; trophy='🌟'; msg='よくできました！もう一息で完璧です。'; }
+  else if (pct>=40){ gc='gok'; trophy='📚'; msg='もう少し！復習してもう一度挑戦しましょう。'; }
+  else             { gc='gb';  trophy='💪'; msg='基礎から見直してみましょう。諦めずに！'; }
+
+  document.getElementById('res-trophy').textContent = trophy;
+  document.getElementById('res-card').className = 'res-card ' + gc;
+  document.getElementById('rs-num').textContent = correctCnt;
+  document.getElementById('rs-denom').textContent = '/ ' + total + ' 問中正解';
+  document.getElementById('rs-bar').style.width = '0%';
+  document.getElementById('res-msg').textContent = msg;
+
+  const note = document.getElementById('res-note');
+  if (newMistakes.length > 0) {
+    note.style.display = 'block';
+    note.innerHTML = '<strong>'+newMistakes.length+'問</strong>が復習リストに登録されました。<br>トップの <strong>「復習する」</strong> からいつでも再挑戦できます！';
+  } else if (isReview && correctCnt===total) {
+    note.style.display = 'block';
+    note.innerHTML = '🎉 復習リストの問題を<strong>すべてクリア</strong>しました！';
+  } else {
+    note.style.display = 'none';
+  }
+
+  if (!isReview && curLang && curCat) {
+    const p = getCatProgress(curLang, curCat);
+    if (note.style.display === 'none') note.style.display = 'block';
+    note.innerHTML = (note.innerHTML ? note.innerHTML + '<br><br>' : '') +
+      '📈 このカテゴリのベスト：<strong>' + p.bestPct + '%</strong>（挑戦 ' + p.attempts + '回）';
+  }
+
+  nav('pg-result');
+  setTimeout(() => { document.getElementById('rs-bar').style.width = pct + '%'; }, 100);
+}
+
+// ================================================================
+// UTILS
+// ================================================================
+function saveReview() {
+  try { localStorage.setItem('cq_rv', JSON.stringify(reviewList)); } catch(e){}
+}
+function esc(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2400);
+}
+
+// ================================================================
+// BOOT
+// ================================================================
+buildHome();
+
+</script>
+</body>
+</html>
