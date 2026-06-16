@@ -16,21 +16,21 @@
   --r:13px;--rs:8px;
 }
 html,body{height:100%;background:var(--bg);color:var(--tx);font-family:var(--sans);-webkit-font-smoothing:antialiased;}
-body{display:flex;justify-content:center;}
-#app{width:100%;max-width:480px;min-height:100vh;display:flex;flex-direction:column;}
+body{display:flex;justify-content:center;overflow:hidden;}
+#app{width:100%;max-width:480px;height:100vh;min-height:0;display:flex;flex-direction:column;overflow:hidden;}
 
 /* ===== PAGE STACK ===== */
 /* Only one .page is shown at a time via JS .hide/.show */
-.page{display:none;flex-direction:column;flex:1;min-height:100vh;animation:pgIn .25s ease;}
+.page{display:none;flex-direction:column;flex:1;height:100vh;min-height:0;animation:pgIn .25s ease;}
 .page.active{display:flex;}
 @keyframes pgIn{from{opacity:0;transform:translateX(18px)}to{opacity:1;transform:translateX(0)}}
 
-.pscroll{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding-bottom:40px;}
+.pscroll{flex:1;min-height:0;overflow-y:auto;-webkit-overflow-scrolling:touch;padding-bottom:40px;}
 .pscroll::-webkit-scrollbar{width:3px}
 .pscroll::-webkit-scrollbar-thumb{background:var(--bd);border-radius:2px}
 
 /* ===== TOPBAR ===== */
-.topbar{display:flex;align-items:center;gap:10px;padding:14px 16px 12px;border-bottom:1px solid var(--bd);background:var(--sf);flex-shrink:0;}
+.topbar{display:flex;align-items:center;gap:10px;padding:14px 16px 12px;border-bottom:1px solid var(--bd);background:var(--sf);flex-shrink:0;position:relative;z-index:20;}
 .tbback{width:34px;height:34px;border-radius:var(--rs);background:var(--sf2);border:1px solid var(--bd);display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:18px;color:var(--sub);flex-shrink:0;}
 .tbback:active{background:var(--sf3);}
 .tbtitle{font-size:15px;font-weight:700;color:var(--tx);}
@@ -88,7 +88,7 @@ body{display:flex;justify-content:center;}
 .cat-arr{color:var(--dim);font-size:16px;}
 
 /* ===== QUIZ ===== */
-.qprog-bar{height:3px;background:var(--bd);flex-shrink:0;}
+.qprog-bar{height:3px;background:var(--bd);flex-shrink:0;position:relative;z-index:19;}
 .qprog-fill{height:100%;background:linear-gradient(90deg,var(--ac),var(--pu));transition:width .4s ease;}
 
 .quiz-body{display:flex;flex-direction:column;gap:13px;padding:14px 12px 32px;}
@@ -148,6 +148,59 @@ body{display:flex;justify-content:center;}
 /* ===== TOAST ===== */
 .toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(60px);background:var(--sf3);border:1px solid var(--bd);border-radius:24px;padding:9px 18px;font-size:12px;color:var(--sub);white-space:nowrap;transition:transform .25s ease;z-index:999;pointer-events:none;}
 .toast.show{transform:translateX(-50%) translateY(0);}
+
+
+/* ===== DESKTOP LAYOUT UPGRADE ===== */
+.desktop-study-panel{display:none;}
+.dash-card{background:var(--sf);border:1px solid var(--bd);border-radius:var(--r);padding:14px 15px;margin-bottom:12px;}
+.dash-title{font-size:12px;font-weight:700;color:var(--tx);margin-bottom:10px;display:flex;align-items:center;gap:6px;}
+.dash-row{display:flex;justify-content:space-between;gap:10px;font-size:12px;color:var(--sub);padding:6px 0;border-top:1px solid rgba(42,48,69,.55);}
+.dash-row:first-of-type{border-top:none;}
+.dash-row strong{font-family:var(--mono);color:var(--tx);font-size:12px;}
+.dash-meter{height:6px;background:var(--sf3);border-radius:999px;overflow:hidden;margin-top:8px;}
+.dash-meter-fill{height:100%;background:linear-gradient(90deg,var(--ac),var(--pu));border-radius:999px;}
+.dash-mini-list{display:flex;flex-direction:column;gap:8px;}
+.dash-mini-item{background:var(--sf2);border:1px solid var(--bd);border-radius:var(--rs);padding:9px 10px;}
+.dash-mini-head{display:flex;justify-content:space-between;gap:8px;font-size:11px;color:var(--tx);font-weight:700;}
+.dash-mini-sub{font-size:10px;color:var(--dim);margin-top:3px;line-height:1.5;}
+.dash-empty{font-size:12px;color:var(--dim);line-height:1.7;}
+.dash-badge{font-family:var(--mono);font-size:10px;color:#fff;background:linear-gradient(135deg,var(--ac),var(--pu));border-radius:999px;padding:2px 7px;white-space:nowrap;}
+
+@media (min-width: 900px){
+  body{align-items:flex-start;}
+  #app{max-width:1180px;min-height:100vh;}
+  .home-head{padding:24px 22px 14px;}
+  .sec-label{padding:0 22px;}
+  .rev-banner{margin:0 22px 18px;}
+  .rev-tools{padding:0 22px 20px;max-width:760px;}
+  .lang-list{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;padding:0 22px 32px;}
+  .lang-card{min-height:96px;}
+  .cat-list{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;padding:18px 22px;}
+  .cat-card{min-height:96px;}
+  .quiz-scroll{padding-bottom:0;}
+  .quiz-layout{display:grid;grid-template-columns:minmax(0,1fr) 330px;gap:16px;max-width:1120px;margin:0 auto;padding:16px 18px 86px;align-items:start;}
+  .quiz-body{padding:0;gap:14px;}
+  .q-card{padding:22px;}
+  .q-text{font-size:16px;line-height:1.85;}
+  .q-code{font-size:13px;}
+  .choice{padding:15px 16px;}
+  .ctxt{font-size:13px;}
+  .feedback{padding:16px 18px;}
+  .fb-exp{font-size:13px;}
+  .desktop-study-panel{display:block;position:sticky;top:0;max-height:calc(100vh - 126px);overflow:auto;padding-right:2px;}
+  .desktop-study-panel::-webkit-scrollbar{width:3px;}
+  .desktop-study-panel::-webkit-scrollbar-thumb{background:var(--bd);border-radius:2px;}
+  .next-wrap{position:sticky;bottom:0;z-index:5;background:linear-gradient(180deg,rgba(13,15,20,0),var(--bg) 24%);padding:18px 18px 18px;margin-top:-74px;}
+  .next-btn{max-width:1120px;margin:0 auto;}
+  .res-body{max-width:640px;margin:0 auto;width:100%;}
+}
+
+@media (min-width: 1180px){
+  .lang-list{grid-template-columns:repeat(3,minmax(0,1fr));}
+  .cat-list{grid-template-columns:repeat(3,minmax(0,1fr));}
+  .quiz-layout{grid-template-columns:minmax(0,1fr) 360px;}
+}
+
 </style>
 </head>
 <body>
@@ -204,18 +257,26 @@ body{display:flex;justify-content:center;}
     </div>
   </div>
   <div class="qprog-bar"><div class="qprog-fill" id="qprog"></div></div>
-  <div class="pscroll">
-    <div class="quiz-body">
-      <div class="q-card">
-        <div class="q-label">Question</div>
-        <div class="q-text" id="qtext"></div>
+  <div class="pscroll quiz-scroll">
+    <div class="quiz-layout">
+      <div class="quiz-body">
+        <div class="q-card">
+          <div class="q-label">Question</div>
+          <div class="q-text" id="qtext"></div>
+        </div>
+        <div class="choices" id="choices"></div>
+        <div class="feedback" id="feedback">
+          <div class="fb-head" id="fb-head"></div>
+          <div id="fb-ans"></div>
+          <div class="fb-exp" id="fb-exp"></div>
+        </div>
       </div>
-      <div class="choices" id="choices"></div>
-      <div class="feedback" id="feedback">
-        <div class="fb-head" id="fb-head"></div>
-        <div id="fb-ans"></div>
-        <div class="fb-exp" id="fb-exp"></div>
-      </div>
+      <aside class="desktop-study-panel" id="desktop-study-panel">
+        <div class="dash-card">
+          <div class="dash-title">📊 学習ダッシュボード</div>
+          <div class="dash-empty">問題を開始すると、進捗と復習状況がここに表示されます。</div>
+        </div>
+      </aside>
     </div>
   </div>
   <div class="next-wrap">
@@ -4024,6 +4085,7 @@ let curIdx = 0;
 let correctCnt = 0;
 let isReview = false;
 let newMistakes = [];
+let currentStreak = 0;
 
 // ================================================================
 // NAV  — シンプル：全ページhide → 指定ページshow
@@ -4301,6 +4363,94 @@ function renderExplanation(q) {
   return html;
 }
 
+
+function buildDesktopReviewHtml() {
+  if (!reviewList.length) {
+    return '<div class="dash-empty">復習待ちはありません。間違えた問題はここに溜まります。</div>';
+  }
+
+  const items = reviewList.slice(-5).reverse().map(q => {
+    const lk = q._lang || '';
+    const langName = DATA[lk] ? DATA[lk].title : 'Review';
+    const title = String(q.q || '').split('\n')[0];
+    return `
+      <div class="dash-mini-item">
+        <div class="dash-mini-head"><span>${esc(langName)}</span><span class="dash-badge">復習</span></div>
+        <div class="dash-mini-sub">${esc(title.length > 42 ? title.slice(0,42) + '…' : title)}</div>
+      </div>`;
+  }).join('');
+
+  const more = reviewList.length > 5 ? `<div class="dash-mini-sub">ほか ${reviewList.length - 5} 問</div>` : '';
+  return `<div class="dash-mini-list">${items}${more}</div>`;
+}
+
+function buildDesktopLangHtml() {
+  if (!curLang || !DATA[curLang]) {
+    return '<div class="dash-empty">通常モードでカテゴリを選ぶと、言語別の進捗が表示されます。</div>';
+  }
+
+  const lang = DATA[curLang];
+  return Object.entries(lang.categories).map(([ck, cat]) => {
+    const p = getCatProgress(curLang, ck);
+    const pct = p.bestPct || 0;
+    return `
+      <div class="dash-mini-item">
+        <div class="dash-mini-head"><span>${esc(cat.icon + ' ' + cat.title)}</span><span>${pct}%</span></div>
+        <div class="dash-meter"><div class="dash-meter-fill" style="width:${pct}%"></div></div>
+        <div class="dash-mini-sub">${p.attempts ? `${p.attempts}回挑戦 ・ ベスト ${p.bestCorrect}/${p.total}` : `${cat.questions.length}問 ・ 未挑戦`}</div>
+      </div>`;
+  }).join('');
+}
+
+function updateDesktopPanel() {
+  const panel = document.getElementById('desktop-study-panel');
+  if (!panel) return;
+
+  const total = curQs.length || 0;
+  const done = Math.min(curIdx, total);
+  const currentPct = total ? Math.round(done / total * 100) : 0;
+  const livePct = total ? Math.round(correctCnt / Math.max(curIdx, 1) * 100) : 0;
+  const catProgress = (!isReview && curLang && curCat) ? getCatProgress(curLang, curCat) : null;
+  const langProgress = curLang ? getLanguageProgress(curLang) : null;
+  const modeLabel = isReview ? '復習モード' : (curLang && DATA[curLang] ? DATA[curLang].title : '通常モード');
+
+  panel.innerHTML = `
+    <div class="dash-card">
+      <div class="dash-title">📊 学習ダッシュボード</div>
+      <div class="dash-row"><span>モード</span><strong>${esc(modeLabel)}</strong></div>
+      <div class="dash-row"><span>現在の進行</span><strong>${total ? `${curIdx + 1}/${total}` : '-'}</strong></div>
+      <div class="dash-row"><span>ここまでの正答</span><strong>${correctCnt}/${Math.max(curIdx,0)}</strong></div>
+      <div class="dash-row"><span>現在の正答率</span><strong>${curIdx ? livePct + '%' : '-'}</strong></div>
+      <div class="dash-row"><span>連続正解</span><strong>${currentStreak}</strong></div>
+      <div class="dash-meter"><div class="dash-meter-fill" style="width:${currentPct}%"></div></div>
+      <div class="dash-mini-sub">このカテゴリ内の進捗</div>
+    </div>
+
+    <div class="dash-card">
+      <div class="dash-title">🏆 ベスト記録</div>
+      ${catProgress ? `
+        <div class="dash-row"><span>ベスト</span><strong>${catProgress.bestPct || 0}%</strong></div>
+        <div class="dash-row"><span>挑戦回数</span><strong>${catProgress.attempts || 0}回</strong></div>
+        <div class="dash-row"><span>前回</span><strong>${catProgress.lastPct || 0}%</strong></div>
+      ` : `
+        <div class="dash-row"><span>復習待ち</span><strong>${reviewList.length}問</strong></div>
+        <div class="dash-row"><span>今回の正答</span><strong>${correctCnt}問</strong></div>
+      `}
+      ${langProgress ? `<div class="dash-mini-sub">言語平均ベスト ${langProgress.avg}% ・ 完了 ${langProgress.done}/${langProgress.total}</div>` : ''}
+    </div>
+
+    <div class="dash-card">
+      <div class="dash-title">🧭 ${curLang && DATA[curLang] ? DATA[curLang].title + ' のカテゴリ進捗' : 'カテゴリ進捗'}</div>
+      <div class="dash-mini-list">${buildDesktopLangHtml()}</div>
+    </div>
+
+    <div class="dash-card">
+      <div class="dash-title">🔁 復習リスト</div>
+      ${buildDesktopReviewHtml()}
+    </div>
+  `;
+}
+
 // ================================================================
 // QUIZ
 // ================================================================
@@ -4310,7 +4460,7 @@ function startQuiz(lk, ck) {
   curCat = ck;
   const cat = DATA[lk].categories[ck];
   curQs = cat.questions.map(q => prepareQuestion(q));
-  curIdx = 0; correctCnt = 0; newMistakes = [];
+  curIdx = 0; correctCnt = 0; newMistakes = []; currentStreak = 0;
   document.getElementById('qtitle').textContent = cat.icon + ' ' + cat.title;
   nav('pg-quiz');
   renderQ();
@@ -4321,7 +4471,7 @@ function startReview() {
   isReview = true;
   curCat = null;
   curQs = reviewList.map(q => prepareQuestion(q));
-  curIdx = 0; correctCnt = 0; newMistakes = [];
+  curIdx = 0; correctCnt = 0; newMistakes = []; currentStreak = 0;
   document.getElementById('qtitle').textContent = '🔁 復習モード';
   nav('pg-quiz');
   renderQ();
@@ -4360,6 +4510,7 @@ function renderQ() {
   nb.textContent = (curIdx+1 < total) ? '次の問題へ →' : '結果を見る →';
 
   document.getElementById('pg-quiz').querySelector('.pscroll').scrollTop = 0;
+  updateDesktopPanel();
 }
 
 function onAnswer(selectedChoice, q, selectedIndex) {
@@ -4375,12 +4526,14 @@ function onAnswer(selectedChoice, q, selectedIndex) {
   if (btns[selectedIndex]) btns[selectedIndex].classList.add(isOk ? 'ok' : 'ng');
 
   if (isOk) {
+    currentStreak++;
     correctCnt++;
     if (isReview) {
       reviewList = reviewList.filter(r => r.q !== q.q);
       saveReview();
     }
   } else {
+    currentStreak = 0;
     if (!isReview) {
       const dup = reviewList.some(r => r.q === q.q);
       if (!dup) {
@@ -4399,6 +4552,7 @@ function onAnswer(selectedChoice, q, selectedIndex) {
   document.getElementById('fb-exp').innerHTML = renderExplanation(q);
   document.getElementById('feedback').className = 'feedback ' + (isOk ? 'ok' : 'ng');
   document.getElementById('next-btn').classList.add('show');
+  updateDesktopPanel();
 }
 
 function nextQ() {
